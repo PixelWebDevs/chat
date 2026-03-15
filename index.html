@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<lang="en">
+<html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -15,6 +15,7 @@
   button:hover { transform:scale(1.05); }
   .logout-btn { position:absolute; top:10px; right:10px; background:crimson; }
   .settings-btn { position:absolute; top:10px; left:10px; }
+  .profile-btn { position:absolute; top:10px; left:95px; } /* Profile Button Position */
   .private-chats-btn { position:absolute; top:10px;}
   #chatContainer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80vw; height:80vh; }
   .chat-container { background:var(--dark-gray); border:5px solid var(--green); border-radius:30px; width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
@@ -41,170 +42,36 @@
   .modal label { display: block; margin-bottom: 5px; font-weight: bold; }
   .modal #personalizedNamesList { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; background: #333; }
   .emoji-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-height:300px; overflow-y:auto; }
-  .react-btn, .viewers-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    margin-left: 8px;
-    color: gold;
-  }
-  .viewers-menu {
-    background: #222;
-    padding: 16px;
-    border-radius: 8px;
-    max-width: 300px;
-    max-height: 400px;
-    overflow-y: auto;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 200;
-  }
-  .viewers-menu button {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: crimson;
-    color: white;
-    border: none;
-    cursor: pointer;
-  }
-  #btnCancelReaction {
-    background: crimson;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 8px;
-    cursor: pointer;
-    margin-left: 8px;
-  }
-  .audio-visualizer {
-    width: 100%;
-    height: 80px;
-    background: linear-gradient(135deg, rgba(34,139,34,0.1), rgba(0,197,10,0.1));
-    border-radius: 8px;
-    margin: 12px 0;
-    border: 2px solid rgba(34,139,34,0.3);
-  }
-  .recording-timer {
-    font-size: 24px;
-    font-weight: bold;
-    color: #00c50a;
-    text-align: center;
-    margin: 8px 0;
-    font-family: 'Courier New', monospace;
-    text-shadow: 0 0 10px rgba(0,197,10,0.5);
-  }
-  .recording-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    background: #ff4444;
-    border-radius: 50%;
-    margin-right: 8px;
-    animation: pulse 1s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-  }
-  .file-preview-container {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    margin: 12px 0;
-    max-height: 300px;
-    overflow-y: auto;
-  }
-  .file-preview-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px;
-    background: rgba(34,139,34,0.2);
-    border: 1px solid rgba(34,139,34,0.4);
-    border-radius: 6px;
-    color: var(--white);
-  }
-  .file-icon {
-    font-size: 24px;
-    min-width: 30px;
-    text-align: center;
-  }
-  .file-info {
-    flex: 1;
-  }
-  .file-name {
-    font-weight: bold;
-    color: #00c50a;
-    word-break: break-word;
-  }
-  .file-size {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 2px;
-  }
-  .file-remove-btn {
-    background: crimson;
-    border: none;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 12px;
-  }
-  .file-remove-btn:hover {
-    transform: scale(1.05);
-  }
-  .file-input-area {
-    border: 2px dashed rgba(34,139,34,0.5);
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin: 12px 0;
-    background: rgba(34,139,34,0.05);
-  }
-  .file-input-area:hover {
-    border-color: rgba(34,139,34,0.8);
-    background: rgba(34,139,34,0.1);
-  }
-  .file-input-area.drag-over {
-    border-color: #00c50a;
-    background: rgba(34,139,34,0.2);
-    transform: scale(1.02);
-  }
-  .file-input-label {
-    color: #00c50a;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  .audio-message-wrapper {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    margin: 6px 0;
-  }
-  .audio-message-indicator {
-    font-size: 12px;
-    color: #00c50a;
-    font-weight: bold;
-  }
+  .react-btn, .viewers-btn { background: none; border: none; cursor: pointer; margin-left: 8px; color: gold; }
+  .viewers-menu { background: #222; padding: 16px; border-radius: 8px; max-width: 300px; max-height: 400px; overflow-y: auto; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 200; }
+  .viewers-menu button { position: absolute; top: 8px; right: 8px; background: crimson; color: white; border: none; cursor: pointer; }
+  #btnCancelReaction { background: crimson; color: white; border: none; border-radius: 6px; padding: 8px; cursor: pointer; margin-left: 8px; }
+  .audio-visualizer { width: 100%; height: 80px; background: linear-gradient(135deg, rgba(34,139,34,0.1), rgba(0,197,10,0.1)); border-radius: 8px; margin: 12px 0; border: 2px solid rgba(34,139,34,0.3); }
+  .recording-timer { font-size: 24px; font-weight: bold; color: #00c50a; text-align: center; margin: 8px 0; font-family: 'Courier New', monospace; text-shadow: 0 0 10px rgba(0,197,10,0.5); }
+  .recording-indicator { display: inline-block; width: 12px; height: 12px; background: #ff4444; border-radius: 50%; margin-right: 8px; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .file-preview-container { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; max-height: 300px; overflow-y: auto; }
+  .file-preview-item { display: flex; align-items: center; gap: 12px; padding: 10px; background: rgba(34,139,34,0.2); border: 1px solid rgba(34,139,34,0.4); border-radius: 6px; color: var(--white); }
+  .file-icon { font-size: 24px; min-width: 30px; text-align: center; }
+  .file-info { flex: 1; }
+  .file-name { font-weight: bold; color: #00c50a; word-break: break-word; }
+  .file-size { font-size: 11px; color: #aaa; margin-top: 2px; }
+  .file-remove-btn { background: crimson; border: none; color: white; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .file-remove-btn:hover { transform: scale(1.05); }
+  .file-input-area { border: 2px dashed rgba(34,139,34,0.5); border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s; margin: 12px 0; background: rgba(34,139,34,0.05); }
+  .file-input-area:hover { border-color: rgba(34,139,34,0.8); background: rgba(34,139,34,0.1); }
+  .file-input-area.drag-over { border-color: #00c50a; background: rgba(34,139,34,0.2); transform: scale(1.02); }
+  .file-input-label { color: #00c50a; cursor: pointer; font-weight: bold; }
+  .audio-message-wrapper { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
+  .audio-message-indicator { font-size: 12px; color: #00c50a; font-weight: bold; }
+  ::-webkit-scrollbar { background-color: transparent; width: 10px; }
 
- ::-webkit-scrollbar {
- background-color: transparent;
- width: 10px;
- }
+  /* Profile Styles */
+  .profile-field { margin-top: 15px; text-align: left; }
+  .profile-field label { display: block; font-weight: bold; margin-bottom: 5px; color: #00c50a; }
 </style>
 </head>
-<!-- LOGIN -->
-
-
-
-
-
+<body>
 
 <div id="loginPage">
   <h1>Global Chat</h1>
@@ -221,13 +88,10 @@
   </div>
 </div>
 
-
-
-
-<!-- CHAT -->
 <div id="chatPage">
   <button class="logout-btn" id="btnLogout">Logout</button>
   <button class="settings-btn" id="btnSettings">Settings</button>
+  <button class="profile-btn" id="btnProfile">Profile</button>
   <button class="private-chats-btn" onclick="location.href='privatechat.html'">Private Chats</button>
   <div id="chatContainer">
     <section class="chat-container">
@@ -244,21 +108,17 @@
         <button id="btnFile">File</button>
         <button id="btnTurtleCall" onclick="location.href='pixeldevscall.html'">Turtle Call</button>
         <button onclick="window.location.href='reportbug.html'">Report Bug</button>
-
-
-
-
         <button id="btnFullscreen" class="fullscreen-btn">Full Screen</button>
       </div>
       <div class="tools" id="messageTools">
         <input id="msgInput" placeholder="Type your message...">
-        <button id="btnCancelReaction" style="display:none;">✖</button> <!-- Bottone per annullare la reazione -->
+        <button id="btnCancelReaction" style="display:none;">✖</button> 
         <button id="btnSend">Send</button>
       </div>
     </section>
   </div>
 </div>
-<!-- MODALS -->
+
 <div class="modal-mask" id="maskAccounts">
   <div class="modal">
     <h2>Accounts</h2>
@@ -306,8 +166,6 @@
   </div>
 </div>
 
-
-<!-- MODAL: Add Admin -->
 <div class="modal-mask" id="maskAddAdmin">
   <div class="modal">
     <h2>Add Admin</h2>
@@ -327,7 +185,6 @@
   </div>
 </div>
 
-<!-- MODAL: Settings -->
 <div class="modal-mask" id="maskSettings">
   <div class="modal">
     <h2>Settings</h2>
@@ -365,6 +222,58 @@
   </div>
 </div>
 
+<div class="modal-mask" id="maskProfile">
+  <div class="modal" style="width: 400px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
+      <h2 id="profDisplayUsername" style="margin: 0; color: #fff;"></h2>
+      <div style="text-align: right;">
+        <span id="profDisplayType" style="font-weight: bold; color: gold; font-size: 14px;">User</span>
+        <select id="profEditType" style="display: none; padding: 4px; font-size: 12px; border-radius: 4px;">
+          <option value="User">User</option>
+          <option value="Admin">Admin</option>
+          <option value="Owner">Owner</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="profile-field">
+      <label>Customizable Name:</label>
+      <input type="text" id="profCustomName" placeholder="Enter a custom name" style="width: 100%; box-sizing: border-box;">
+    </div>
+    
+    <div class="profile-field">
+      <label id="profAboutLabel">About Me:</label>
+      <textarea id="profAbout" rows="4" placeholder="Write something about yourself..." style="width: 100%; box-sizing: border-box;"></textarea>
+    </div>
+    
+    <div class="profile-field">
+      <label>Birthday:</label>
+      <div style="display: flex; gap: 10px;">
+        <select id="profBirthMonth" style="flex: 1;">
+          <option value="" disabled selected>Month</option>
+          <option value="January">January</option>
+          <option value="February">February</option>
+          <option value="March">March</option>
+          <option value="April">April</option>
+          <option value="May">May</option>
+          <option value="June">June</option>
+          <option value="July">July</option>
+          <option value="August">August</option>
+          <option value="September">September</option>
+          <option value="October">October</option>
+          <option value="November">November</option>
+          <option value="December">December</option>
+        </select>
+        <input type="number" id="profBirthDay" min="1" max="31" placeholder="Day (1-31)" style="width: 100px;">
+      </div>
+    </div>
+    
+    <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: space-between;">
+      <button id="btnSaveProfile">Save Profile</button>
+      <button class="closeModal" data-target="maskProfile" style="background: crimson;">Close</button>
+    </div>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -407,28 +316,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   const btnAddPersonalizedName = document.getElementById('btnAddPersonalizedName');
   const btnSaveSettings = document.getElementById('btnSaveSettings');
   const btnResetSettings = document.getElementById('btnResetSettings');
-
+  const btnProfile = document.getElementById('btnProfile');
 
   let reactingTo = null;
-
+  let currentProfileTarget = null;
 
   function open(id){document.getElementById(id).style.display='flex';}
   function close(id){document.getElementById(id).style.display='none';}
   document.querySelectorAll('.closeModal').forEach(b=>b.onclick=()=>close(b.dataset.target));
 
-
-
-
   const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😍','😘','😗','😙','😚','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🥳','🥺','😢','😭','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','😈','👿','👹','🚀','🎉','❤️','👍'];
-
-
-
 
   let user=null, isOwner=false, editKey=null, delMode=false, editMode=false, userIsAdmin=false;
   let userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
-
-
-
 
   function sendSystem(text, ownerMsg=false){
     db.ref('messages').push({user:'System',text,system:true,ownerMsg,timestamp:Date.now()});
@@ -453,17 +353,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   function applySettings() {
-    // Apply background colors via CSS variables
     document.documentElement.style.setProperty('--black', userSettings.websiteBgColor);
     document.documentElement.style.setProperty('--dark-gray', userSettings.chatBgColor);
-    // Apply button color and text color
     document.querySelectorAll('button').forEach(btn => {
       if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal')) {
         btn.style.backgroundColor = userSettings.buttonColor;
         btn.style.color = userSettings.buttonTextColor;
       }
     });
-    // Apply scrollbar color
     let scrollbarStyle = document.getElementById('scrollbar-style');
     if (scrollbarStyle) {
       scrollbarStyle.remove();
@@ -548,7 +445,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     userSettings.scrollbarColor = scrollbarColorInput.value;
     saveUserSettings();
     applySettings();
-    loadMsgs(); // Refresh messages to apply personalized names
+    loadMsgs(); 
     close('maskSettings');
   };
 
@@ -557,14 +454,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
       saveUserSettings();
       applySettings();
-      loadMsgs(); // Refresh messages
+      loadMsgs(); 
       close('maskSettings');
       alert('Settings reset to default!');
     }
   };
-
-
-
 
   function showLogin(){loginPage.style.display='flex';chatPage.style.display='none';}
   function showChat(){
@@ -581,34 +475,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     loadMsgs();
   }
 
-
-
-
   btnSignUp.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).set({password:p});alert('Created');};
   btnLogin.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).get().then(s=>{const d=s.val();if(d&&d.password===p){user=u;showChat();sendSystem(`${u} has entered the chat`,false);}else alert('Invalid');});};
   btnOwner.onclick=()=>{const code = ttaEl.value.trim(); if (!code) { alert('Fill'); return; } db.ref('admins/' + code).get().then(snapshot => { const admin = snapshot.val(); if (admin) { user = admin.name; isOwner = false; userIsAdmin = true; showChat(); sendSystem(`${admin.name} has entered the chat`, false); chatArea.style.color = admin.color; } else if (code === 'tta-3-21-12') { user = 'Owner'; isOwner = true; userIsAdmin = false; showChat(); sendSystem('Owner has entered the chat', true); } else { alert('TTA Code is Incorrect'); } }); };
   btnLogout.onclick=()=>location.reload();
 
-
-
-
   btnSend.onclick=()=>{const t=msgInput.value.trim();if(!t)return;const messageData = { user, text: t, timestamp: Date.now() }; if (reactingTo) { messageData.reactionTo = reactingTo; reactingTo = null; msgInput.placeholder = 'Type your message...'; btnCancelReaction.style.display = 'none'; } db.ref('messages').push(messageData);msgInput.value='';};
   msgInput.onkeydown=e=>{if(e.key==='Enter')btnSend.click();};
 
-
-
-
   btnDel.onclick=()=>{delMode=!delMode;loadMsgs();};
   btnEdit.onclick=()=>{editMode=!editMode;loadMsgs();};
-
-
-
 
   btnEmoji.onclick=()=>{open('maskEmoji'); const list=document.getElementById('emojiList'); list.innerHTML=''; EMOJIS.forEach(e=>{const b=document.createElement('button');b.textContent=e; b.style.backgroundColor = userSettings.buttonColor; b.style.color = userSettings.buttonTextColor; b.onclick=()=>{msgInput.value+=e;close('maskEmoji');}; list.appendChild(b);});};
   btnFile.onclick=()=>open('maskFile');
   btnSettings.onclick=()=>{openSettingsModal();};
   
-  // File upload functionality with preview
   const fileInput = document.getElementById('fileInput');
   const fileDropArea = document.getElementById('fileDropArea');
   const filePreviewContainer = document.getElementById('filePreviewContainer');
@@ -684,27 +565,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   
   fileDropArea.onclick = () => fileInput.click();
-  
-  fileInput.onchange = (e) => {
-    selectedFiles = Array.from(e.target.files);
-    updateFilePreview();
-  };
-  
-  fileDropArea.ondragover = (e) => {
-    e.preventDefault();
-    fileDropArea.classList.add('drag-over');
-  };
-  
-  fileDropArea.ondragleave = () => {
-    fileDropArea.classList.remove('drag-over');
-  };
-  
-  fileDropArea.ondrop = (e) => {
-    e.preventDefault();
-    fileDropArea.classList.remove('drag-over');
-    selectedFiles = Array.from(e.dataTransfer.files);
-    updateFilePreview();
-  };
+  fileInput.onchange = (e) => { selectedFiles = Array.from(e.target.files); updateFilePreview(); };
+  fileDropArea.ondragover = (e) => { e.preventDefault(); fileDropArea.classList.add('drag-over'); };
+  fileDropArea.ondragleave = () => { fileDropArea.classList.remove('drag-over'); };
+  fileDropArea.ondrop = (e) => { e.preventDefault(); fileDropArea.classList.remove('drag-over'); selectedFiles = Array.from(e.dataTransfer.files); updateFilePreview(); };
   
   document.getElementById('btnSendFile').onclick = () => {
     selectedFiles.forEach(f => {
@@ -722,6 +586,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     updateFilePreview();
     close('maskFile');
   };
+  
   btnAudio.onclick=()=>open('maskAudio');
   let recorder,chunks;
   let audioContext, analyser, dataArray, animationId, recordingStartTime, timerInterval;
@@ -785,24 +650,20 @@ document.addEventListener('DOMContentLoaded',()=>{
     recorder.start();
     drawWaveform();
   });
+  
   document.getElementById('stopRec').onclick=()=>{
     recorder.stop();
     document.getElementById('startRec').disabled=false;
     document.getElementById('stopRec').disabled=true;
   };
+  
   document.getElementById('btnSendAudio').onclick=()=>{
     const audio=document.getElementById('audioPreview');
     fetch(audio.src).then(r=>r.blob()).then(b=>{
       const r2=new FileReader();
       r2.onload=()=>{
-        const messageData = {
-          user,
-          text:'[audio]',
-          audioUrl:r2.result,
-          timestamp:Date.now()
-        };
+        const messageData = { user, text:'[audio]', audioUrl:r2.result, timestamp:Date.now() };
         db.ref('messages').push(messageData);
-        // Reset UI after sending
         document.getElementById('audioPreview').src = '';
         document.getElementById('audioPreview').style.display = 'none';
         document.getElementById('btnSendAudio').disabled = true;
@@ -813,20 +674,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     close('maskAudio');
   };
+  
   btnView.onclick=()=>{open('maskAccounts'); const list=document.getElementById('accountsList'); list.innerHTML=''; db.ref('users').get().then(s=>{const users=s.val()||{};Object.keys(users).forEach(u=>{const div=document.createElement('div');div.textContent=`${u}: ${users[u].password}`;const ban=document.createElement('button');ban.textContent='Ban';ban.onclick=()=>db.ref('users/'+u).remove().then(()=>btnView.click());div.appendChild(ban);list.appendChild(div);});});};
-
-
-
 
   btnFs.onclick=()=>document.getElementById('chatContainer').requestFullscreen();
 
-
-
-
   document.getElementById('btnSaveEdit').onclick=()=>{const t=document.getElementById('editInput').value.trim();if(editKey&&t)db.ref('messages/'+editKey+'/text').set(t);loadMsgs();close('maskEditMsg');};
-
-
-
 
   function loadMsgs() {
     chatArea.innerHTML = '';
@@ -856,6 +709,18 @@ document.addEventListener('DOMContentLoaded',()=>{
           }
         } else {
           msgDiv.className = 'message ' + (m.user === user ? 'self' : 'other') + (m.user === 'Owner' ? ' owner' : '');
+          
+          const profBtn = document.createElement('button');
+          profBtn.textContent = 'Profile';
+          profBtn.style.padding = '2px 5px';
+          profBtn.style.marginRight = '5px';
+          profBtn.style.fontSize = '10px';
+          profBtn.style.cursor = 'pointer';
+          profBtn.style.backgroundColor = userSettings.buttonColor;
+          profBtn.style.color = userSettings.buttonTextColor;
+          profBtn.onclick = () => openUserProfile(m.user);
+          msgDiv.append(profBtn);
+
           const uEl = document.createElement('span');
           const displayName = userSettings.personalizedNames[m.user] || m.user;
           uEl.textContent = displayName + ': ';
@@ -880,13 +745,11 @@ document.addEventListener('DOMContentLoaded',()=>{
           if (m.text.startsWith('[audio]')) {
             const audioWrapper = document.createElement('div');
             audioWrapper.className = 'audio-message-wrapper';
-            
             const audioEl = document.createElement('audio');
             audioEl.controls = true;
             audioEl.src = m.audioUrl;
             audioEl.style.width = '100%';
             audioEl.style.maxWidth = '300px';
-            
             audioWrapper.appendChild(audioEl);
             msgDiv.appendChild(audioWrapper);
           } else if (m.text.startsWith('[file]')) {
@@ -926,31 +789,24 @@ document.addEventListener('DOMContentLoaded',()=>{
 
           msgDiv.appendChild(tsEl);
 
-
-          // React button
           const reactBtn = document.createElement('button');
           reactBtn.textContent = 'React';
           reactBtn.className = 'react-btn';
           reactBtn.onclick = () => reactBtnHandler({ user: m.user, text: m.text });
           msgDiv.appendChild(reactBtn);
 
-
-          // Viewers button
           const viewersBtn = document.createElement('button');
-          viewersBtn.innerHTML = '&#128065;'; // Eye icon
+          viewersBtn.innerHTML = '&#128065;'; 
           viewersBtn.className = 'viewers-btn';
-          viewersBtn.onclick = () => {
-            openViewersMenu(key, m.viewers || []);
-          };
+          viewersBtn.onclick = () => { openViewersMenu(key, m.viewers || []); };
           msgDiv.appendChild(viewersBtn);
-
 
           if (delMode && (isOwner || (user !== 'Owner' && isAdmin()))) {
             const dbtn = document.createElement('button');
             dbtn.className = 'del-btn';
             dbtn.textContent = '✖';
             dbtn.onclick = () => {
-              if (isOwner || m.user !== 'Owner') { // Permetti all'Owner di cancellare qualsiasi messaggio
+              if (isOwner || m.user !== 'Owner') { 
                 db.ref('messages/' + key).remove();
               } else {
                 alert('Cannot delete Owner messages');
@@ -976,7 +832,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
   }
 
-
   function openViewersMenu(messageKey, viewers) {
     const menu = document.createElement('div');
     menu.className = 'viewers-menu';
@@ -992,7 +847,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     menu.style.maxHeight = '400px';
     menu.style.overflowY = 'auto';
 
-
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✖';
     closeBtn.style.position = 'absolute';
@@ -1001,11 +855,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     closeBtn.onclick = () => document.body.removeChild(menu);
     menu.appendChild(closeBtn);
 
-
     const title = document.createElement('h3');
     title.textContent = 'Viewers';
     menu.appendChild(title);
-
 
     viewers.forEach(viewer => {
       const viewerItem = document.createElement('div');
@@ -1014,42 +866,29 @@ document.addEventListener('DOMContentLoaded',()=>{
       menu.appendChild(viewerItem);
     });
 
-
     document.body.appendChild(menu);
   }
 
-
-  // Funzione per annullare la reazione
   btnCancelReaction.onclick = () => {
     reactingTo = null;
     msgInput.placeholder = 'Type your message...';
-    btnCancelReaction.style.display = 'none'; // Nascondi il bottone "X"
+    btnCancelReaction.style.display = 'none'; 
   };
 
-
-  // Mostra il bottone "X" quando si sta reagendo a un messaggio
   const reactBtnHandler = (message) => {
     const displayName = userSettings.personalizedNames[message.user] || message.user;
     reactingTo = message;
     msgInput.placeholder = `Reacting to ${displayName}`;
-    btnCancelReaction.style.display = 'inline-block'; // Mostra il bottone "X"
+    btnCancelReaction.style.display = 'inline-block'; 
   };
 
-
-  btnAddAdmin.onclick = () => {
-    open('maskAddAdmin');
-    loadAdmins();
-  };
-
+  btnAddAdmin.onclick = () => { open('maskAddAdmin'); loadAdmins(); };
 
   btnCreateAdmin.onclick = () => {
     const code = adminCodeInput.value.trim();
     const name = adminNameInput.value.trim();
     const color = adminColorInput.value.trim();
-    if (!code || !name || !color) {
-      alert('Fill all fields');
-      return;
-    }
+    if (!code || !name || !color) { alert('Fill all fields'); return; }
     db.ref('admins/' + code).set({ name, color });
     alert('Admin created');
     adminCodeInput.value = '';
@@ -1057,7 +896,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     adminColorInput.value = '#0000ff';
     loadAdmins();
   };
-
 
   function loadAdmins() {
     adminList.innerHTML = '';
@@ -1072,16 +910,13 @@ document.addEventListener('DOMContentLoaded',()=>{
         editBtn.onclick = () => editAdmin(code, admin);
         const banBtn = document.createElement('button');
         banBtn.textContent = 'Ban';
-        banBtn.onclick = () => {
-          db.ref('admins/' + code).remove().then(() => loadAdmins());
-        };
+        banBtn.onclick = () => { db.ref('admins/' + code).remove().then(() => loadAdmins()); };
         div.appendChild(editBtn);
         div.appendChild(banBtn);
         adminList.appendChild(div);
       });
     });
   }
-
 
   function editAdmin(code, admin) {
     adminCodeInput.value = code;
@@ -1091,10 +926,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       const newCode = adminCodeInput.value.trim();
       const newName = adminNameInput.value.trim();
       const newColor = adminColorInput.value.trim();
-      if (!newCode || !newName || !newColor) {
-        alert('Fill all fields');
-        return;
-      }
+      if (!newCode || !newName || !newColor) { alert('Fill all fields'); return; }
       db.ref('admins/' + code).remove().then(() => {
         db.ref('admins/' + newCode).set({ name: newName, color: newColor });
         alert('Admin updated');
@@ -1106,22 +938,74 @@ document.addEventListener('DOMContentLoaded',()=>{
     };
   }
 
+  function isAdmin() { return isOwner || userIsAdmin; }
 
-  function isAdmin() {
-    return isOwner || userIsAdmin;
-  }
+  // Profile Logic
+  window.openUserProfile = function(targetUser) {
+    currentProfileTarget = targetUser;
+    db.ref('users/' + targetUser + '/profile').get().then(snap => {
+      const p = snap.val() || {};
+      
+      document.getElementById('profDisplayUsername').textContent = targetUser;
+      document.getElementById('profAboutLabel').textContent = `About ${targetUser}:`;
+      document.getElementById('profCustomName').value = p.customName || '';
+      document.getElementById('profAbout').value = p.about || '';
+      document.getElementById('profBirthMonth').value = p.birthMonth || '';
+      document.getElementById('profBirthDay').value = p.birthDay || '';
+      
+      const isMe = (targetUser === user);
+      const canEdit = isMe || isOwner || user === 'Owner';
+      
+      document.getElementById('profCustomName').disabled = !canEdit;
+      document.getElementById('profAbout').disabled = !canEdit;
+      document.getElementById('profBirthMonth').disabled = !canEdit;
+      document.getElementById('profBirthDay').disabled = !canEdit;
+      
+      if (isOwner || user === 'Owner') {
+        document.getElementById('profDisplayType').style.display = 'none';
+        document.getElementById('profEditType').style.display = 'block';
+        document.getElementById('profEditType').value = p.userType || (targetUser === 'Owner' ? 'Owner' : 'User');
+      } else {
+        document.getElementById('profDisplayType').style.display = 'block';
+        document.getElementById('profEditType').style.display = 'none';
+        document.getElementById('profDisplayType').textContent = p.userType || 'User';
+      }
+      
+      document.getElementById('btnSaveProfile').style.display = canEdit ? 'block' : 'none';
+      
+      open('maskProfile');
+    });
+  };
 
-  // --- Notification: show system notification when new chat messages arrive while page is not visible ---
+  btnProfile.onclick = () => openUserProfile(user);
+  
+  document.getElementById('btnSaveProfile').onclick = () => {
+    if(!currentProfileTarget) return;
+    const updates = {
+      customName: document.getElementById('profCustomName').value.trim(),
+      about: document.getElementById('profAbout').value.trim(),
+      birthMonth: document.getElementById('profBirthMonth').value,
+      birthDay: document.getElementById('profBirthDay').value
+    };
+    
+    if (isOwner || user === 'Owner') {
+      updates.userType = document.getElementById('profEditType').value;
+    }
+    
+    db.ref('users/' + currentProfileTarget + '/profile').update(updates).then(() => {
+      alert('Profile Saved!');
+      close('maskProfile');
+    });
+  };
+
   (function setupMessageNotifications(){
     let initialLastTimestamp = 0;
-    // get latest message timestamp once to avoid notifying about historical messages
     db.ref('messages').orderByChild('timestamp').limitToLast(1).get().then(snap=>{
       snap.forEach(ch=>{ initialLastTimestamp = ch.val().timestamp || 0; });
-      // listen for new messages with timestamp greater than current last
       db.ref('messages').orderByChild('timestamp').startAt(initialLastTimestamp + 1).on('child_added', snap2=>{
         const m = snap2.val();
         if (!m || m.system) return;
-        if (typeof user !== 'undefined' && m.user === user) return; // don't notify for your own messages
+        if (typeof user !== 'undefined' && m.user === user) return; 
         if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
           navigator.serviceWorker.ready.then(reg=>{
             reg.showNotification(m.user, {
@@ -1133,7 +1017,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           }).catch(()=>{ try { new Notification(m.user, { body: m.text, icon: 'icon.png' }); } catch(e){} });
         }
       });
-    }).catch(()=>{ /* ignore */ });
+    }).catch(()=>{ });
   })();
 
   showLogin();
@@ -1141,12 +1025,3 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

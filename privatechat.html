@@ -15,21 +15,62 @@
     button:hover { transform:scale(1.05); }
     .logout-btn { position:absolute; top:10px; right:10px; background:crimson; }
     .global-chat-btn { position:absolute; top:10px;}
+    .settings-btn { position:absolute; top:10px; left:10px; }
+    .profile-btn { position:absolute; top:10px; left:95px; }
+    .reported-btn { position:absolute; top:10px; left:180px; background: #ffc107; color: #000; font-weight: bold; }
+    .users-btn { position:absolute; top:10px; left:265px; background: #007bff; color: white; font-weight: bold; }
     .private-chat-container { width:80vw; height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
     
-    /* New Tab and Action Button Styles */
     .tab-container { display:flex; gap:5px; margin-bottom:8px; width:100%; }
-    .tab-btn { background: rgba(255,255,255,0.1); flex: 1; border-radius: 6px; padding: 8px; font-weight: bold; }
+    .tab-btn { background: rgba(255,255,255,0.1); flex: 1; border-radius: 6px; padding: 8px; font-weight: bold; position: relative; color: white; border: none; cursor: pointer; }
     .tab-btn.active { background: var(--green); }
+    
+    /* Banned Styling */
+    .banned-username { text-decoration: underline wavy red !important; color: #ff6b6b !important; }
+    .banned-notice { color: #ff4d4d; font-weight: bold; text-align: center; display: block; margin: 10px 0; font-size: 1.1em; }
+    .user-mgmt-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+
+    .unread-indicator { position: absolute; top: 2px; right: 2px; color: #ff6b6b; font-size: 12px; }
+    .user-unread-indicator { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #ff6b6b; font-size: 14px; }
+    .message { position: relative; }
+    .del-btn { background: none; border: none; cursor: pointer; position: absolute; top: 4px; right: 4px; color: red; font-size: 12px; }
+    .date-sep { text-align: center; margin: 16px 0 8px 0; color: var(--white); font-weight: bold; font-size: 14px; }
+    .timestamp { font-size: 10px; color: #ccc; margin-top: 4px; text-align: right; }
     .action-btn { font-size: 12px; padding: 5px 10px; margin-left: 5px; border-radius: 4px; }
     .btn-accept { background: #28a745; }
     .btn-deny { background: #ffc107; color: #000; }
     .btn-block { background: #dc3545; }
     .btn-unblock { background: #6c757d; }
+
+    #notificationContainer { position: fixed; top: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: #2a2a2a; border: 1px solid var(--green); border-radius: 8px; padding: 12px; width: 280px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); text-align: left; }
+    .toast-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+    .close-toast { color: crimson; cursor: pointer; font-weight: bold; border:none; background:none; font-size:16px; padding: 0 4px; margin: 0; }
+    .close-toast:hover { transform: scale(1.1); }
+    .toast-body { margin-bottom: 12px; font-size: 14px; word-break: break-word; color: #ddd; }
+    .toast-footer button { width: 100%; background: var(--green); margin: 0; }
+
+    .modal-mask { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; }
+    .modal { background:#222; padding:16px; border-radius:8px; width:90%; max-width:600px; max-height:90%; overflow:auto; }
+
+    .profile-field { margin-top: 15px; text-align: left; }
+    .profile-field label { display: block; font-weight: bold; margin-bottom: 5px; color: #00c50a; }
+
+    .report-item { padding: 10px; border-bottom: 1px solid #444; text-align: left; margin-bottom: 10px; background: rgba(255,255,255,0.05); border-radius: 4px;}
+    .report-log-container { background:#111; padding:10px; margin:10px 0; border-radius:8px; max-height:400px; overflow-y:auto; text-align:left; font-size:13px; color: #eee; }
+    
+    .sign-banned { background: #dc3545; color: white; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; margin-bottom: 10px; display: none; }
   </style>
 </head>
 <body>
+  
+  <div id="notificationContainer"></div>
+
   <button class="global-chat-btn" onclick="location.href='index.html'">Global Chat</button>
+  <button class="settings-btn" id="btnSettings">Settings</button>
+  <button class="profile-btn" id="btnProfile" style="display:none;">Profile</button>
+  <button class="reported-btn" id="btnReported" style="display:none;">Reported</button>
+  <button class="users-btn" id="btnUsers" style="display:none;">Users</button>
 
   <div id="loginPage">
     <h1>Private Chats</h1>
@@ -48,19 +89,16 @@
   <div id="privateChatPage" style="display:none; width:100%; height:100%; flex-direction:column; justify-content:center; align-items:center;">
     <button class="logout-btn" id="btnLogout">Logout</button>
     <div class="private-chat-container">
-      
       <div id="userListView" style="width:100%; max-width:800px;">
         <h2>Private Chats</h2>
         <input id="userSearch" placeholder="Search users..." style="width:100%; padding:8px; border-radius:6px; border:none; margin:8px 0;" />
-        
         <div class="tab-container">
           <button class="tab-btn active" id="tabChats">Chats</button>
           <button class="tab-btn" id="tabNewChat">New Chat</button>
           <button class="tab-btn" id="tabRequests">Requests</button>
           <button class="tab-btn" id="tabBlocked">Blocked</button>
         </div>
-
-        <div id="userList" style="max-height:60vh; overflow-y:auto; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px;"></div>
+        <div id="userList" style="max-height:60vh; overflow-y:auto; background:var(--dark-gray); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:10px;"></div>
       </div>
 
       <div id="chatView" style="display:none; width:100%; max-width:800px; height:80vh; display:flex; flex-direction:column;">
@@ -69,11 +107,142 @@
           <h2 id="chatWithTitle" style="margin:0;">Chat</h2>
           <div style="width:40px;"></div>
         </div>
-        <div id="privateChatArea" style="flex:1; overflow-y:auto; padding:12px; background:rgba(0,0,0,0.2); border-radius:12px;"></div>
+        <div class="chat-container" style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+          <div id="privateChatArea" style="flex:1; overflow-y:auto; padding:12px; background:var(--dark-gray); display:flex; flex-direction:column;"></div>
+        </div>
         <div style="display:flex; gap:8px; margin-top:10px;">
           <input id="privateMsgInput" placeholder="Type your message..." style="flex:1; padding:8px; border-radius:6px; border:none;" />
           <button id="privateSendBtn">Send</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskUsers">
+    <div class="modal" style="max-width: 700px;">
+      <h2>User Management</h2>
+      <div class="tab-container">
+        <button class="tab-btn active" id="tabNotBanned" onclick="switchMgmtTab('not_banned')">Not Banned</button>
+        <button class="tab-btn" id="tabBanned" onclick="switchMgmtTab('banned')">Banned</button>
+      </div>
+      <div id="mgmtList" style="max-height: 50vh; overflow-y: auto; margin: 15px 0;"></div>
+      <button class="closeModal" data-target="maskUsers" style="background: crimson;">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskSettings">
+    <div class="modal">
+      <h2>Settings</h2>
+      <div style="margin-bottom: 20px;">
+        <label for="websiteBgColor">Website Background Color:</label>
+        <input type="color" id="websiteBgColor" value="#181515">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label for="chatBgColor">Chat Background Color:</label>
+        <input type="color" id="chatBgColor" value="#181515">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label for="buttonColor">Button Color:</label>
+        <input type="color" id="buttonColor" value="#3f1587">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label for="buttonTextColor">Button Text Color:</label>
+        <input type="color" id="buttonTextColor" value="#ffffff">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label for="scrollbarColor">*Reload Required* Scrollbar Color:</label>
+        <input type="color" id="scrollbarColor" value="#48326e">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <label for="borderColor">Border Color:</label>
+        <input type="color" id="borderColor" value="#3f1587">
+      </div>
+      <div style="margin-bottom: 20px;">
+        <h3>Personalized Names</h3>
+        <p style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Set custom names for other users (only visible to you).</p>
+        <div id="personalizedNamesList"></div>
+        <button id="btnAddPersonalizedName">Add Personalized Name</button>
+      </div>
+      <div style="display: flex; gap: 10px; justify-content: space-between;">
+        <button id="btnSaveSettings">Save Settings</button>
+        <button id="btnResetSettings" style="background: crimson;">Reset to Default</button>
+      </div>
+      <button class="closeModal" data-target="maskSettings">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskProfile">
+    <div class="modal" style="width: 400px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 10px; margin-bottom: 15px;">
+        <h2 id="profDisplayUsername" style="margin: 0; color: #fff;"></h2>
+        <div style="text-align: right;">
+          <span id="profDisplayType" style="font-weight: bold; color: gold; font-size: 14px;">User</span>
+          <select id="profEditType" style="display: none; padding: 4px; font-size: 12px; border-radius: 4px;">
+            <option value="User">User</option>
+            <option value="Admin">Admin</option>
+            <option value="Owner">Owner</option>
+          </select>
+        </div>
+      </div>
+      <div id="profBannedNotice" class="banned-notice" style="display:none;">The User Got Banned</div>
+      <div class="profile-field">
+        <label>Customizable Name:</label>
+        <input type="text" id="profCustomName" placeholder="Enter a custom name" style="width: 100%; box-sizing: border-box;">
+      </div>
+      <div class="profile-field">
+        <label id="profAboutLabel">About Me:</label>
+        <textarea id="profAbout" rows="4" placeholder="Write something about yourself..." style="width: 100%; box-sizing: border-box;"></textarea>
+      </div>
+      <div class="profile-field">
+        <label>Birthday:</label>
+        <div style="display: flex; gap: 10px;">
+          <select id="profBirthMonth" style="flex: 1;">
+            <option value="" disabled selected>Month</option>
+            <option value="January">January</option>
+            <option value="February">February</option>
+            <option value="March">March</option>
+            <option value="April">April</option>
+            <option value="May">May</option>
+            <option value="June">June</option>
+            <option value="July">July</option>
+            <option value="August">August</option>
+            <option value="September">September</option>
+            <option value="October">October</option>
+            <option value="November">November</option>
+            <option value="December">December</option>
+          </select>
+          <input type="number" id="profBirthDay" min="1" max="31" placeholder="Day (1-31)" style="width: 100px;">
+        </div>
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: space-between;">
+        <button id="btnSaveProfile">Save Profile</button>
+        <button class="closeModal" data-target="maskProfile" style="background: crimson;">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskReports">
+    <div class="modal" style="width: 600px; max-height: 80vh;">
+      <h2>Reported Chats</h2>
+      <div class="tab-container" style="margin-bottom: 15px;">
+        <button class="tab-btn active" id="tabActiveReports" onclick="renderReportsList('active')">Active</button>
+        <button class="tab-btn" id="tabClosedReports" onclick="renderReportsList('closed')">Closed</button>
+        <button class="tab-btn" id="tabDismissedReports" onclick="renderReportsList('dismissed')">Dismissed</button>
+      </div>
+      <div id="reportsList" style="margin: 15px 0; max-height: 50vh; overflow-y: auto;"></div>
+      <button class="closeModal" data-target="maskReports" style="background: crimson;">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskViewReportedChat">
+    <div class="modal" style="width: 500px;">
+      <h3 id="reportDetailTitle">Chat Log</h3>
+      <div id="bannedSign" class="sign-banned">User got Banned</div>
+      <div id="reportedChatContent" class="report-log-container"></div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="btnBanReportedUser" style="background: crimson; flex: 1; min-width: 120px;">Ban Reported User</button>
+        <button id="btnDismissReport" style="background: #ffc107; color: #000; flex: 1; min-width: 120px;">Dismiss Report</button>
+        <button class="closeModal" data-target="maskViewReportedChat" style="flex: 1; min-width: 120px;">Back</button>
       </div>
     </div>
   </div>
@@ -99,6 +268,11 @@
     const btnLogin = document.getElementById('btnLogin');
     const btnSignUp = document.getElementById('btnSignUp');
     const btnLogout = document.getElementById('btnLogout');
+    const btnProfile = document.getElementById('btnProfile');
+    const btnReported = document.getElementById('btnReported');
+    const btnUsers = document.getElementById('btnUsers');
+    const btnOwnerLogin = document.getElementById('btnOwnerLogin');
+    const ttaCodeEl = document.getElementById('ttaCode');
 
     const userSearch = document.getElementById('userSearch');
     const userList = document.getElementById('userList');
@@ -109,16 +283,40 @@
     const privateChatArea = document.getElementById('privateChatArea');
     const privateMsgInput = document.getElementById('privateMsgInput');
     const privateSendBtn = document.getElementById('privateSendBtn');
+    const notificationContainer = document.getElementById('notificationContainer');
+
+    const btnSettings = document.getElementById('btnSettings');
+    const websiteBgColorInput = document.getElementById('websiteBgColor');
+    const chatBgColorInput = document.getElementById('chatBgColor');
+    const buttonColorInput = document.getElementById('buttonColor');
+    const buttonTextColorInput = document.getElementById('buttonTextColor');
+    const scrollbarColorInput = document.getElementById('scrollbarColor');
+    const personalizedNamesList = document.getElementById('personalizedNamesList');
+    const btnAddPersonalizedName = document.getElementById('btnAddPersonalizedName');
+    const btnSaveSettings = document.getElementById('btnSaveSettings');
+    const btnResetSettings = document.getElementById('btnResetSettings');
+    const borderColorInput = document.getElementById('borderColor');
 
     let currentUser = null;
     let currentChatUser = null;
     let usersCache = [];
-    let contacts = {}; // Store relation status: 'accepted', 'pending', 'blocked', 'hidden_request'
+    let bannedCache = [];
+    let contacts = {};
+    let pinnedChats = [];
     let currentChatRef = null;
     let contactsRef = null;
-    let currentTab = 'chats'; // Default tab
+    let notificationsRef = null;
+    let currentTab = 'chats'; 
+    let lastReadTimestamps = {}; 
+    let unreadCounts = {}; 
+    let lastMessageTimes = {}; 
+    let currentProfileTarget = null;
+    let selectedReportUser = null;
+    let currentViewingReportId = null;
+    let banListenerRef = null;
 
-    // Tab Listeners
+    let userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {}, borderColor: '#3f1587' };
+
     document.getElementById('tabChats').onclick = () => switchTab('chats');
     document.getElementById('tabNewChat').onclick = () => switchTab('new_chat');
     document.getElementById('tabRequests').onclick = () => switchTab('requests');
@@ -133,67 +331,203 @@
       renderUserList(userSearch.value);
     }
 
+    function updateUnreadIndicators() {
+      const tabChats = document.getElementById('tabChats');
+      let existingIndicator = tabChats.querySelector('.unread-indicator');
+      const totalUnread = Object.values(unreadCounts).reduce((sum, count) => sum + count, 0);
+      
+      if (totalUnread > 0) {
+        if (!existingIndicator) { existingIndicator = document.createElement('span'); existingIndicator.className = 'unread-indicator'; tabChats.appendChild(existingIndicator); }
+        existingIndicator.textContent = '⦿';
+      } else if (existingIndicator) {
+        existingIndicator.remove();
+      }
+      renderUserList(userSearch.value);
+    }
+
+    function calculateInitialUnreadCounts() {
+      unreadCounts = {};
+      Object.keys(contacts).forEach(otherUser => {
+        if (contacts[otherUser] === 'accepted') {
+          const chatId = sortChatId(currentUser, otherUser);
+          db.ref('privateMessages/' + chatId).once('value').then(snapshot => {
+            const msgs = snapshot.val() || {};
+            const lastRead = lastReadTimestamps[otherUser] || 0;
+            let unreadCount = 0;
+            Object.values(msgs).forEach(msg => { if (msg.from !== currentUser && msg.timestamp > lastRead) { unreadCount++; } });
+            if (unreadCount > 0) { unreadCounts[otherUser] = unreadCount; updateUnreadIndicators(); }
+          });
+        }
+      });
+    }
+
+    function deletePrivateMessage(chatId, msgId) {
+      if (confirm('Are you sure you want to delete this message?')) {
+        db.ref('privateMessages/' + chatId + '/' + msgId).update({
+            deleted: true,
+            deletedAt: Date.now()
+        });
+      }
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDate(timestamp) {
+      const date = new Date(timestamp);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      if (date.toDateString() === today.toDateString()) return 'Today';
+      else if (date.toDateString() === yesterday.toDateString()) return 'Yesterday';
+      else return date.toLocaleDateString();
+    }
+
+    function isSameDay(timestamp1, timestamp2) {
+      return new Date(timestamp1).toDateString() === new Date(timestamp2).toDateString();
+    }
+
     function showLogin() {
       loginPage.style.display = 'flex';
       privateChatPage.style.display = 'none';
+      btnProfile.style.display = 'none';
+      btnReported.style.display = 'none';
+      btnUsers.style.display = 'none';
+      close('maskSettings');
+      close('maskProfile');
+      close('maskReports');
+      close('maskUsers');
     }
 
     function showChat() {
       loginPage.style.display = 'none';
       privateChatPage.style.display = 'flex';
+      btnProfile.style.display = 'block';
+      if(currentUser === 'Owner') {
+          btnReported.style.display = 'block';
+          btnUsers.style.display = 'block';
+      }
       showUserListView();
       loadUsers();
+      loadUserSettings();
       
-      // Listen to contacts/relationships for the logged in user
+      db.ref(`users/${currentUser}/online`).set(true);
+      db.ref(`users/${currentUser}/lastSeen`).set(Date.now());
+
+      if (banListenerRef) banListenerRef.off();
+      banListenerRef = db.ref(`users/${currentUser}`);
+      banListenerRef.on('value', snap => {
+          if (currentUser && !snap.exists()) {
+              alert("You have been permanently banned");
+              location.reload(); 
+          }
+      });
+      
       contactsRef = db.ref(`users/${currentUser}/contacts`);
       contactsRef.on('value', snap => {
         contacts = snap.val() || {};
+        pinnedChats = pinnedChats.filter(u => contacts[u] === 'accepted');
+        db.ref(`users/${currentUser}/pinnedChats`).set(pinnedChats);
+        setupLastMessageTracking();
         renderUserList(userSearch.value);
+      });
+
+      db.ref(`users/${currentUser}/pinnedChats`).on('value', snap => {
+        pinnedChats = snap.val() || [];
+        renderUserList(userSearch.value);
+      });
+
+      notificationsRef = db.ref(`notifications/${currentUser}`);
+      notificationsRef.on('child_added', snap => {
+        const notif = snap.val();
+        const notifId = snap.key;
+        const isActivelyChatting = (currentChatUser === notif.from && chatView.style.display === 'flex');
+        if (!isActivelyChatting) {
+          if (!unreadCounts[notif.from]) unreadCounts[notif.from] = 0;
+          unreadCounts[notif.from]++;
+          updateUnreadIndicators();
+        }
+        db.ref(`notifications/${currentUser}/${notifId}`).remove();
+        if (!isActivelyChatting) {
+          triggerNotification(userSettings.personalizedNames[notif.from] || notif.from, notif.text);
+        }
+      });
+
+      calculateInitialUnreadCounts();
+      setupLastMessageTracking();
+    }
+
+    function triggerNotification(senderName, messageText) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.innerHTML = `
+        <div class="toast-header">
+          <span>${senderName}</span>
+          <button class="close-toast">X</button>
+        </div>
+        <div class="toast-body">
+          ${messageText.length > 50 ? messageText.substring(0, 50) + '...' : messageText}
+        </div>
+        <div class="toast-footer">
+          <button class="open-chat-btn">Open Chat</button>
+        </div>
+      `;
+      toast.querySelector('.close-toast').onclick = () => toast.remove();
+      toast.querySelector('.open-chat-btn').onclick = () => { toast.remove(); openPrivateChat(senderName); };
+      notificationContainer.appendChild(toast);
+    }
+
+    function showUserListView() { userListView.style.display = 'block'; chatView.style.display = 'none'; }
+    function showChatView() { userListView.style.display = 'none'; chatView.style.display = 'flex'; }
+
+    function setupLastMessageTracking() {
+      Object.keys(contacts).forEach(otherUser => {
+        if (contacts[otherUser] === 'accepted') {
+          const chatId = sortChatId(currentUser, otherUser);
+          db.ref('privateMessages/' + chatId).on('value', snapshot => {
+            const msgs = snapshot.val() || {};
+            const activeMsgs = Object.values(msgs).filter(m => !m.deleted);
+            const timestamps = activeMsgs.map(m => m.timestamp);
+            lastMessageTimes[otherUser] = timestamps.length > 0 ? Math.max(...timestamps) : 0;
+            if (currentTab === 'chats') renderUserList(userSearch.value);
+          });
+        }
       });
     }
 
-    function showUserListView() {
-      userListView.style.display = 'block';
-      chatView.style.display = 'none';
-    }
+    function sortChatId(a, b) { return [a, b].sort().join('_'); }
 
-    function showChatView() {
-      userListView.style.display = 'none';
-      chatView.style.display = 'flex';
-    }
-
-    function sortChatId(a, b) {
-      return [a, b].sort().join('_');
-    }
-
-    // Helper to update contact status
     function updateContact(user, status) {
-      if (status === null) {
-        db.ref(`users/${currentUser}/contacts/${user}`).remove();
-      } else {
-        db.ref(`users/${currentUser}/contacts/${user}`).set(status);
-      }
+      if (status === null) db.ref(`users/${currentUser}/contacts/${user}`).remove();
+      else db.ref(`users/${currentUser}/contacts/${user}`).set(status);
     }
 
     function renderUserList(filter = '') {
       const query = filter.trim().toLowerCase();
       userList.innerHTML = '';
-      
-      // Filter out the current user
       let filtered = usersCache.filter(u => u !== currentUser);
 
-      // Filter based on the selected Tab
       if (currentTab === 'chats') {
         filtered = filtered.filter(u => contacts[u] === 'accepted');
+        filtered.sort((a, b) => {
+          const aIndex = pinnedChats.indexOf(a);
+          const bIndex = pinnedChats.indexOf(b);
+          if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+          if (aIndex !== -1) return -1;
+          if (bIndex !== -1) return 1;
+          const aTime = lastMessageTimes[a] || 0;
+          const bTime = lastMessageTimes[b] || 0;
+          return bTime - aTime;
+        });
       } else if (currentTab === 'new_chat') {
-        filtered = filtered.filter(u => contacts[u] !== 'blocked'); // Show all except blocked
+        filtered = filtered.filter(u => contacts[u] !== 'blocked');
       } else if (currentTab === 'requests') {
         filtered = filtered.filter(u => contacts[u] === 'pending');
       } else if (currentTab === 'blocked') {
         filtered = filtered.filter(u => contacts[u] === 'blocked');
       }
 
-      // Filter based on Search
       filtered = filtered.filter(u => !query || u.toLowerCase().includes(query));
 
       if (filtered.length === 0) {
@@ -203,172 +537,559 @@
 
       filtered.forEach(u => {
         const row = document.createElement('div');
-        row.style.padding = '10px';
-        row.style.marginBottom = '6px';
-        row.style.borderRadius = '8px';
-        row.style.background = 'rgba(255,255,255,0.05)';
-        row.style.display = 'flex';
-        row.style.justifyContent = 'space-between';
-        row.style.alignItems = 'center';
+        row.style.padding = '10px'; row.style.marginBottom = '6px'; row.style.borderRadius = '8px';
+        row.style.background = 'rgba(255,255,255,0.05)'; row.style.display = 'flex';
+        row.style.justifyContent = 'space-between'; row.style.alignItems = 'center';
+
+        const nameContainer = document.createElement('div');
+        nameContainer.style.display = 'flex'; nameContainer.style.alignItems = 'center';
 
         const nameSpan = document.createElement('span');
-        nameSpan.textContent = u;
-        row.appendChild(nameSpan);
+        nameSpan.textContent = userSettings.personalizedNames[u] || u;
+        if (bannedCache.includes(u)) nameSpan.classList.add('banned-username');
+        nameContainer.appendChild(nameSpan);
 
-        if (currentTab === 'chats' || currentTab === 'new_chat') {
-          row.style.cursor = 'pointer';
-          row.onclick = () => openPrivateChat(u);
-        } else if (currentTab === 'requests') {
-          const btnDiv = document.createElement('div');
+        const profBtn = document.createElement('button');
+        profBtn.textContent = 'Profile'; profBtn.style.padding = '2px 5px'; profBtn.style.marginLeft = '8px';
+        profBtn.style.fontSize = '10px'; profBtn.style.backgroundColor = userSettings.buttonColor;
+        profBtn.style.color = userSettings.buttonTextColor;
+        profBtn.onclick = (e) => { e.stopPropagation(); openUserProfile(u); };
+        nameContainer.appendChild(profBtn);
 
-          const btnAccept = document.createElement('button');
-          btnAccept.className = 'action-btn btn-accept';
-          btnAccept.textContent = 'Accept';
-          btnAccept.onclick = (e) => { e.stopPropagation(); updateContact(u, 'accepted'); };
+        row.appendChild(nameContainer);
 
-          const btnDeny = document.createElement('button');
-          btnDeny.className = 'action-btn btn-deny';
-          btnDeny.textContent = 'Deny';
-          btnDeny.onclick = (e) => { e.stopPropagation(); updateContact(u, 'hidden_request'); };
-
-          const btnBlock = document.createElement('button');
-          btnBlock.className = 'action-btn btn-block';
-          btnBlock.textContent = 'Block';
-          btnBlock.onclick = (e) => { e.stopPropagation(); updateContact(u, 'blocked'); };
-
-          btnDiv.append(btnAccept, btnDeny, btnBlock);
-          row.appendChild(btnDiv);
-        } else if (currentTab === 'blocked') {
-          const btnUnblock = document.createElement('button');
-          btnUnblock.className = 'action-btn btn-unblock';
-          btnUnblock.textContent = 'Unblock';
-          btnUnblock.onclick = (e) => { e.stopPropagation(); updateContact(u, null); };
-          row.appendChild(btnUnblock);
+        if (pinnedChats.includes(u)) {
+          const dragHandle = document.createElement('span'); dragHandle.textContent = '𓃎';
+          dragHandle.style.cursor = 'grab'; dragHandle.style.marginRight = '10px'; dragHandle.style.fontSize = '16px';
+          nameContainer.insertBefore(dragHandle, nameSpan);
+          row.draggable = true;
+          row.ondragstart = (e) => { e.dataTransfer.setData('text/plain', u); };
+          row.ondragover = (e) => e.preventDefault();
+          row.ondrop = (e) => {
+            const draggedUser = e.dataTransfer.getData('text/plain');
+            if (draggedUser !== u && pinnedChats.includes(draggedUser) && pinnedChats.includes(u)) {
+              const draggedIndex = pinnedChats.indexOf(draggedUser);
+              const targetIndex = pinnedChats.indexOf(u);
+              pinnedChats.splice(draggedIndex, 1); pinnedChats.splice(targetIndex, 0, draggedUser);
+              db.ref(`users/${currentUser}/pinnedChats`).set(pinnedChats);
+            }
+          };
         }
 
+        const onlineIndicator = document.createElement('span');
+        onlineIndicator.style.marginLeft = '5px'; onlineIndicator.dataset.user = u;
+        nameContainer.appendChild(onlineIndicator);
+        db.ref(`users/${u}/online`).on('value', snap => {
+          const indicator = document.querySelector(`[data-user="${u}"]`);
+          if (indicator) indicator.textContent = snap.val() === true ? '🟢' : '🔴';
+        });
+
+        if (currentTab === 'chats' && unreadCounts[u] > 0) {
+          const indicator = document.createElement('span');
+          indicator.className = 'user-unread-indicator'; indicator.textContent = '⦿';
+          row.appendChild(indicator);
+        }
+
+        if (currentTab === 'chats') {
+          const buttonsDiv = document.createElement('div');
+          buttonsDiv.style.display = 'flex'; buttonsDiv.style.gap = '5px';
+          const pinBtn = document.createElement('button'); pinBtn.className = 'action-btn';
+          pinBtn.textContent = pinnedChats.includes(u) ? 'Unpin' : 'Pin';
+          pinBtn.onclick = (e) => { e.stopPropagation(); togglePin(u); };
+          const reportBtn = document.createElement('button'); reportBtn.className = 'action-btn';
+          reportBtn.textContent = 'Report';
+          reportBtn.onclick = (e) => { e.stopPropagation(); reportChat(u); };
+          const blockBtn = document.createElement('button'); blockBtn.className = 'action-btn';
+          blockBtn.textContent = 'Block';
+          blockBtn.onclick = (e) => { e.stopPropagation(); blockUser(u); };
+          const deleteBtn = document.createElement('button'); deleteBtn.className = 'action-btn';
+          deleteBtn.textContent = 'Delete';
+          deleteBtn.onclick = (e) => { e.stopPropagation(); deleteChat(u); };
+          buttonsDiv.append(pinBtn, reportBtn, blockBtn, deleteBtn);
+          row.appendChild(buttonsDiv);
+        }
+
+        if (currentTab === 'chats' || currentTab === 'new_chat') {
+          row.style.cursor = 'pointer'; row.onclick = () => openPrivateChat(u);
+        } else if (currentTab === 'requests') {
+          const btnDiv = document.createElement('div');
+          const btnAccept = document.createElement('button'); btnAccept.className = 'action-btn btn-accept'; btnAccept.textContent = 'Accept';
+          btnAccept.onclick = (e) => { e.stopPropagation(); updateContact(u, 'accepted'); };
+          const btnDeny = document.createElement('button'); btnDeny.className = 'action-btn btn-deny'; btnDeny.textContent = 'Deny';
+          btnDeny.onclick = (e) => { e.stopPropagation(); updateContact(u, 'hidden_request'); };
+          const btnBlock = document.createElement('button'); btnBlock.className = 'action-btn btn-block'; btnBlock.textContent = 'Block';
+          btnBlock.onclick = (e) => { e.stopPropagation(); updateContact(u, 'blocked'); };
+          btnDiv.append(btnAccept, btnDeny, btnBlock); row.appendChild(btnDiv);
+        } else if (currentTab === 'blocked') {
+          const btnUnblock = document.createElement('button'); btnUnblock.className = 'action-btn btn-unblock'; btnUnblock.textContent = 'Unblock';
+          btnUnblock.onclick = (e) => { e.stopPropagation(); unblockUser(u); };
+          row.appendChild(btnUnblock);
+        }
         userList.appendChild(row);
       });
     }
 
+    function togglePin(user) {
+      if (pinnedChats.includes(user)) pinnedChats = pinnedChats.filter(u => u !== user);
+      else pinnedChats.push(user);
+      db.ref(`users/${currentUser}/pinnedChats`).set(pinnedChats);
+      renderUserList(userSearch.value); 
+    }
+
+    function reportChat(user) {
+      const chatId = sortChatId(currentUser, user);
+      db.ref('reports').push({ 
+          reporter: currentUser, 
+          reportedUser: user, 
+          chatId: chatId, 
+          status: 'active',
+          timestamp: Date.now() 
+      });
+      alert('Chat reported.');
+    }
+
+    function blockUser(user) { updateContact(user, 'blocked'); }
+
+    function unblockUser(user) {
+      const chatId = sortChatId(currentUser, user);
+      db.ref('privateMessages/' + chatId).once('value').then(snapshot => {
+        const hasMessages = snapshot.exists() && Object.keys(snapshot.val() || {}).length > 0;
+        updateContact(user, hasMessages ? 'accepted' : null);
+      });
+    }
+
+    function deleteChat(user) { updateContact(user, null); }
+
+    function open(id){document.getElementById(id).style.display='flex';}
+    function close(id){document.getElementById(id).style.display='none';}
+    document.querySelectorAll('.closeModal').forEach(b=>b.onclick=()=>close(b.dataset.target));
+
+    function loadUserSettings() {
+      db.ref('userSettings/' + currentUser).get().then(snapshot => {
+        const settings = snapshot.val();
+        userSettings = { ...{ buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {}, borderColor: '#3f1587' }, ...(settings || {}) };
+        applySettings();
+      }).catch(() => { applySettings(); });
+    }
+
+    function saveUserSettings() { db.ref('userSettings/' + currentUser).set(userSettings); }
+
+    function applySettings() {
+      document.documentElement.style.setProperty('--black', userSettings.websiteBgColor);
+      document.documentElement.style.setProperty('--dark-gray', userSettings.chatBgColor);
+      document.querySelectorAll('button').forEach(btn => {
+        if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal') && !btn.classList.contains('reported-btn') && !btn.classList.contains('users-btn')) {
+          btn.style.backgroundColor = userSettings.buttonColor;
+          btn.style.color = userSettings.buttonTextColor;
+        }
+      });
+      let scrollbarStyle = document.getElementById('scrollbar-style');
+      if (scrollbarStyle) scrollbarStyle.remove();
+      scrollbarStyle = document.createElement('style');
+      scrollbarStyle.id = 'scrollbar-style';
+      scrollbarStyle.textContent = `
+        #privateChatArea::-webkit-scrollbar-thumb, #userList::-webkit-scrollbar-thumb {
+          background: ${userSettings.scrollbarColor} !important; border-radius: 100px;
+        }
+      `;
+      document.head.appendChild(scrollbarStyle);
+      const chatContainer = document.querySelector('.chat-container');
+      if (chatContainer) {
+        chatContainer.style.border = `5px solid ${userSettings.borderColor}`;
+        chatContainer.style.borderRadius = '30px';
+      }
+    }
+
+    function openSettingsModal() {
+      websiteBgColorInput.value = userSettings.websiteBgColor;
+      chatBgColorInput.value = userSettings.chatBgColor;
+      buttonColorInput.value = userSettings.buttonColor;
+      buttonTextColorInput.value = userSettings.buttonTextColor;
+      scrollbarColorInput.value = userSettings.scrollbarColor;
+      borderColorInput.value = userSettings.borderColor;
+      renderPersonalizedNames();
+      open('maskSettings');
+    }
+
+    function renderPersonalizedNames() {
+      personalizedNamesList.innerHTML = '';
+      Object.keys(userSettings.personalizedNames).forEach(username => {
+        const div = document.createElement('div');
+        div.style.display = 'flex'; div.style.alignItems = 'center'; div.style.marginBottom = '5px';
+        const label = document.createElement('span'); label.textContent = `${username}: `; label.style.marginRight = '10px';
+        const input = document.createElement('input'); input.type = 'text'; input.value = userSettings.personalizedNames[username]; input.style.marginRight = '10px';
+        const saveBtn = document.createElement('button'); saveBtn.textContent = 'Save';
+        saveBtn.onclick = () => { userSettings.personalizedNames[username] = input.value.trim(); renderPersonalizedNames(); };
+        const removeBtn = document.createElement('button'); removeBtn.textContent = 'Remove'; removeBtn.style.backgroundColor = 'crimson';
+        removeBtn.onclick = () => { delete userSettings.personalizedNames[username]; renderPersonalizedNames(); };
+        div.appendChild(label); div.appendChild(input); div.appendChild(saveBtn); div.appendChild(removeBtn);
+        personalizedNamesList.appendChild(div);
+      });
+    }
+
+    btnAddPersonalizedName.onclick = () => {
+      const username = prompt('Enter the username to personalize:');
+      if (username && username.trim()) {
+        const customName = prompt('Enter the custom name:');
+        if (customName && customName.trim()) {
+          userSettings.personalizedNames[username.trim()] = customName.trim();
+          renderPersonalizedNames();
+        }
+      }
+    };
+
+    btnSaveSettings.onclick = () => {
+      userSettings.websiteBgColor = websiteBgColorInput.value; userSettings.chatBgColor = chatBgColorInput.value;
+      userSettings.buttonColor = buttonColorInput.value; userSettings.buttonTextColor = buttonTextColorInput.value;
+      userSettings.scrollbarColor = scrollbarColorInput.value; userSettings.borderColor = borderColorInput.value;
+      saveUserSettings(); applySettings(); renderUserList(userSearch.value); close('maskSettings');
+    };
+
+    btnResetSettings.onclick = () => {
+      if (confirm('Are you sure you want to reset all settings to default?')) {
+        userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {}, borderColor: '#3f1587' };
+        saveUserSettings(); applySettings(); renderUserList(userSearch.value); close('maskSettings');
+        alert('Settings reset to default!');
+      }
+    };
+
+    btnSettings.onclick = () => {
+      const modal = document.getElementById('maskSettings');
+      if (modal.style.display === 'flex') close('maskSettings');
+      else openSettingsModal();
+    };
+
     function loadUsers() {
       db.ref('users').on('value', snapshot => {
-        const val = snapshot.val() || {};
-        usersCache = Object.keys(val);
+        usersCache = Object.keys(snapshot.val() || {});
+        renderUserList(userSearch.value);
+      });
+      db.ref('bannedUsers').on('value', snapshot => {
+        bannedCache = Object.keys(snapshot.val() || {});
         renderUserList(userSearch.value);
       });
     }
 
-    userSearch.addEventListener('input', () => {
-      renderUserList(userSearch.value);
-    });
+    userSearch.addEventListener('input', () => { renderUserList(userSearch.value); });
 
     function openPrivateChat(otherUser) {
       currentChatUser = otherUser;
-      chatWithTitle.textContent = `Chat with ${otherUser}`;
+      chatWithTitle.innerHTML = `<span class="${bannedCache.includes(otherUser) ? 'banned-username' : ''}">Chat with ${userSettings.personalizedNames[otherUser] || otherUser}</span> <button onclick="openUserProfile('${otherUser}')" style="font-size:12px; padding:4px 8px; margin-left:10px; border-radius:4px; cursor:pointer; background-color:${userSettings.buttonColor}; color:${userSettings.buttonTextColor}; border:none;">Profile</button>`;
       showChatView();
-      privateChatArea.innerHTML = '';
+      privateChatArea.innerHTML = ''; lastReadTimestamps[otherUser] = Date.now();
+      unreadCounts[otherUser] = 0; updateUnreadIndicators();
 
-      if (currentChatRef) {
-        currentChatRef.off();
-      }
-
+      if (currentChatRef) currentChatRef.off();
       const chatId = sortChatId(currentUser, otherUser);
       currentChatRef = db.ref('privateMessages/' + chatId);
+
+      currentChatRef.once('value').then(snapshot => {
+        const msgs = snapshot.val() || {};
+        Object.keys(msgs).forEach(msgId => {
+          const msg = msgs[msgId];
+          if (msg.from === otherUser && !msg.seenBy) {
+            db.ref('privateMessages/' + chatId + '/' + msgId + '/seenBy').set(currentUser);
+            db.ref('privateMessages/' + chatId + '/' + msgId + '/seenAt').set(Date.now());
+          }
+        });
+      });
 
       currentChatRef.on('value', snapshot => {
         const msgs = snapshot.val() || {};
         privateChatArea.innerHTML = '';
-        Object.values(msgs)
-          .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-          .forEach(msg => {
-            const div = document.createElement('div');
-            div.style.padding = '8px';
-            div.style.marginBottom = '6px';
-            div.style.borderRadius = '8px';
-            div.style.background = msg.from === currentUser ? 'rgba(34,139,34,0.4)' : 'rgba(255,255,255,0.1)';
-            div.style.alignSelf = msg.from === currentUser ? 'flex-end' : 'flex-start';
-            div.style.maxWidth = '75%';
-            div.textContent = msg.text;
-            privateChatArea.appendChild(div);
-          });
+        const msgIds = Object.keys(msgs).sort((a, b) => (msgs[a].timestamp || 0) - (msgs[b].timestamp || 0));
+        let currentDate = null;
+        
+        msgIds.forEach(msgId => {
+          const msg = msgs[msgId];
+          if (msg.deleted && currentUser !== 'Owner') return;
+
+          if (!currentDate || !isSameDay(currentDate, msg.timestamp)) {
+            const dateSep = document.createElement('div'); dateSep.className = 'date-sep';
+            dateSep.textContent = formatDate(msg.timestamp); privateChatArea.appendChild(dateSep);
+            currentDate = msg.timestamp;
+          }
+          
+          const div = document.createElement('div');
+          div.className = 'message'; div.style.padding = '8px'; div.style.marginBottom = '6px'; div.style.borderRadius = '8px';
+          div.style.alignSelf = msg.from === currentUser ? 'flex-start' : 'flex-end';
+          div.style.background = msg.from === currentUser ? 'rgba(34,139,34,0.4)' : 'rgba(255,255,255,0.1)';
+          div.style.maxWidth = '75%';
+          
+          const messageText = document.createElement('div');
+          messageText.innerHTML = msg.text + (msg.deleted ? ' <span style="color:red; font-size:10px;">[DELETED]</span>' : '');
+          div.appendChild(messageText);
+          
+          const timestampDiv = document.createElement('div'); timestampDiv.className = 'timestamp';
+          timestampDiv.textContent = formatTime(msg.timestamp); div.appendChild(timestampDiv);
+          
+          if (msg.from === currentUser) {
+            const statusDiv = document.createElement('div'); statusDiv.style.fontSize = '10px'; statusDiv.style.color = '#ccc'; statusDiv.style.textAlign = 'right'; statusDiv.style.marginTop = '2px';
+            if (msg.seenBy === currentChatUser) statusDiv.textContent = 'Seen';
+            else { db.ref(`users/${currentChatUser}/online`).once('value').then(snap => { if (snap.val() === true) statusDiv.textContent = 'Delivered'; }); }
+            div.appendChild(statusDiv);
+          }
+          
+          if (msg.from === currentUser) {
+            const deleteBtn = document.createElement('button'); deleteBtn.className = 'del-btn'; deleteBtn.textContent = '✖';
+            deleteBtn.onclick = () => deletePrivateMessage(chatId, msgId);
+            div.appendChild(deleteBtn);
+          }
+          privateChatArea.appendChild(div);
+        });
         privateChatArea.scrollTop = privateChatArea.scrollHeight;
       });
     }
 
     privateSendBtn.onclick = () => {
-      const text = privateMsgInput.value.trim();
-      if (!text || !currentChatUser) return;
+      const text = privateMsgInput.value.trim(); if (!text || !currentChatUser) return;
       const chatId = sortChatId(currentUser, currentChatUser);
-      
-      // 1. Send Message
       db.ref('privateMessages/' + chatId).push({ from: currentUser, text, timestamp: Date.now() });
       privateMsgInput.value = '';
-
-      // 2. Add receiver to sender's "Chats" automatically if not already there
-      if (contacts[currentChatUser] !== 'accepted') {
-        db.ref(`users/${currentUser}/contacts/${currentChatUser}`).set('accepted');
-      }
-
-      // 3. Update the receiver's requests list
       db.ref(`users/${currentChatUser}/contacts/${currentUser}`).once('value', snap => {
-        const receiverStatus = snap.val();
-        // If receiver hasn't blocked the sender and hasn't accepted them yet
-        if (receiverStatus !== 'blocked' && receiverStatus !== 'accepted') {
-            // Even if it was previously denied ('hidden_request'), setting it to 'pending'
-            // makes it visible in their Requests tab again.
-            db.ref(`users/${currentChatUser}/contacts/${currentUser}`).set('pending');
-        }
+        if (snap.val() !== 'blocked') db.ref(`notifications/${currentChatUser}`).push({ from: currentUser, text: text, timestamp: Date.now() });
+      });
+      if (contacts[currentChatUser] !== 'accepted') db.ref(`users/${currentUser}/contacts/${currentChatUser}`).set('accepted');
+      db.ref(`users/${currentChatUser}/contacts/${currentUser}`).once('value', snap => {
+        if (snap.val() !== 'blocked' && snap.val() !== 'accepted') db.ref(`users/${currentChatUser}/contacts/${currentUser}`).set('pending');
       });
     };
 
-    backToUsers.onclick = () => {
-      if (currentChatRef) {
-        currentChatRef.off();
-        currentChatRef = null;
-      }
-      currentChatUser = null;
-      showUserListView();
-    };
+    privateMsgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") { e.preventDefault(); privateSendBtn.click(); } });
+
+    backToUsers.onclick = () => { if (currentChatRef) currentChatRef.off(); currentChatUser = null; showUserListView(); };
 
     btnSignUp.onclick = () => {
-      const u = usernameEl.value.trim();
-      const p = passwordEl.value.trim();
-      if (!u || !p) {
-        alert('Fill in username and password');
-        return;
-      }
-      db.ref('users/' + u).set({ password: p });
-      alert('Account created');
+      const u = usernameEl.value.trim(), p = passwordEl.value.trim();
+      if (!u || !p) { alert('Fill in username and password'); return; }
+      db.ref('users/' + u).set({ password: p, createdAt: Date.now() }); alert('Account created');
     };
 
     btnLogin.onclick = () => {
-      const u = usernameEl.value.trim();
-      const p = passwordEl.value.trim();
-      if (!u || !p) {
-        alert('Fill in username and password');
-        return;
-      }
+      const u = usernameEl.value.trim(), p = passwordEl.value.trim();
+      if (!u || !p) { alert('Fill in username and password'); return; }
       db.ref('users/' + u).get().then(s => {
-        const d = s.val();
-        if (d && d.password === p) {
-          currentUser = u;
-          showChat();
-        } else {
-          alert('Invalid username or password');
-        }
+        const d = s.val(); if (d && d.password === p) { currentUser = u; showChat(); } else alert('Invalid username or password');
       });
     };
 
+    btnOwnerLogin.onclick = () => {
+      if (ttaCodeEl.value.trim() === "tta-3-21-12") {
+        currentUser = "Owner"; showChat();
+      } else alert("Invalid TTA Code");
+    };
+
     btnLogout.onclick = () => {
-      if (contactsRef) contactsRef.off();
-      currentUser = null;
-      contacts = {};
-      showLogin();
-      usernameEl.value = '';
-      passwordEl.value = '';
+      if(currentUser && currentUser !== "Owner") {
+        db.ref(`users/${currentUser}/online`).set(false); db.ref(`users/${currentUser}/lastSeen`).set(Date.now());
+      }
+      if (contactsRef) contactsRef.off(); if (notificationsRef) notificationsRef.off(); if (currentChatRef) currentChatRef.off(); if (banListenerRef) banListenerRef.off();
+      currentUser = null; currentChatUser = null; contacts = {}; lastReadTimestamps = {}; unreadCounts = {}; notificationContainer.innerHTML = '';
+      showLogin(); usernameEl.value = ''; passwordEl.value = ''; ttaCodeEl.value = '';
+    };
+
+    // User Management logic
+    btnUsers.onclick = () => { open('maskUsers'); switchMgmtTab('not_banned'); };
+    
+    function switchMgmtTab(tab) {
+        document.getElementById('tabNotBanned').classList.toggle('active', tab === 'not_banned');
+        document.getElementById('tabBanned').classList.toggle('active', tab === 'banned');
+        renderMgmtList(tab);
+    }
+
+    function renderMgmtList(tab) {
+        const list = document.getElementById('mgmtList');
+        list.innerHTML = "Loading...";
+        const refPath = tab === 'not_banned' ? 'users' : 'bannedUsers';
+        db.ref(refPath).once('value', snap => {
+            list.innerHTML = "";
+            const users = snap.val() || {};
+            Object.keys(users).forEach(u => {
+                if(u === 'Owner') return;
+                const data = users[u];
+                const item = document.createElement('div');
+                item.className = 'user-mgmt-item';
+                if(tab === 'not_banned') {
+                    item.innerHTML = `
+                        <div>
+                            <strong>${u}</strong><br>
+                            <small>PW: ${data.password} | Created: ${new Date(data.createdAt || 0).toLocaleDateString()}</small>
+                        </div>
+                        <button onclick="banUser('${u}')" style="background:crimson;">Ban</button>
+                    `;
+                } else {
+                    item.innerHTML = `<div><strong>${u}</strong></div><button onclick="unbanUser('${u}')" style="background:#28a745;">Unban</button>`;
+                }
+                list.appendChild(item);
+            });
+        });
+    }
+
+    window.banUser = (u) => {
+        if(!confirm(`Ban ${u} and delete active account?`)) return;
+        db.ref('users/'+u).once('value', snap => {
+            const data = snap.val();
+            db.ref('bannedUsers/'+u).set(data).then(() => {
+                db.ref('users/'+u).remove();
+                alert(u + " banned.");
+                renderMgmtList('not_banned');
+            });
+        });
+    };
+
+    window.unbanUser = (u) => {
+        db.ref('bannedUsers/'+u).once('value', snap => {
+            const data = snap.val();
+            db.ref('users/'+u).set(data).then(() => {
+                db.ref('bannedUsers/'+u).remove();
+                alert(u + " unbanned.");
+                renderMgmtList('banned');
+            });
+        });
+    };
+
+    let currentReportTab = 'active';
+
+    btnReported.onclick = () => {
+      open('maskReports');
+      renderReportsList('active');
+    };
+
+    window.renderReportsList = function(status) {
+      currentReportTab = status;
+      document.getElementById('tabActiveReports').classList.toggle('active', status === 'active');
+      document.getElementById('tabClosedReports').classList.toggle('active', status === 'closed');
+      document.getElementById('tabDismissedReports').classList.toggle('active', status === 'dismissed');
+
+      const reportsList = document.getElementById('reportsList');
+      reportsList.innerHTML = "Loading reports...";
+
+      db.ref('reports').on('value', snap => {
+        reportsList.innerHTML = "";
+        const reports = snap.val();
+        if (!reports) { reportsList.innerHTML = "<p>No reports found.</p>"; return; }
+
+        let count = 0;
+        Object.keys(reports).forEach(id => {
+          const r = reports[id];
+          const rStatus = r.status || 'active';
+          if (rStatus !== status) return;
+          count++;
+
+          const item = document.createElement('div');
+          item.className = 'report-item';
+          item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong>Reporter:</strong> ${r.reporter} <br>
+                <strong>Reported:</strong> <span style="color:orange">${r.reportedUser}</span> <br>
+                <small>${new Date(r.timestamp).toLocaleString()}</small>
+              </div>
+              <div style="display:flex; gap:5px;">
+                ${status === 'active' ? `<button onclick="updateReportStatus('${id}', 'closed')" style="background:#6c757d;">Hide</button>` : ''}
+                ${status !== 'active' ? `<button onclick="updateReportStatus('${id}', 'active')" style="background:#28a745;">Recover</button>` : ''}
+                <button onclick="viewReportDetail('${id}')">View Chat</button>
+              </div>
+            </div>
+          `;
+          reportsList.appendChild(item);
+        });
+        if (count === 0) reportsList.innerHTML = `<p>No reports in ${status}.</p>`;
+      });
+    };
+
+    window.updateReportStatus = function(reportId, newStatus) {
+      db.ref(`reports/${reportId}`).update({ status: newStatus });
+    };
+
+    window.viewReportDetail = function(reportId) {
+      currentViewingReportId = reportId;
+      db.ref('reports/' + reportId).once('value', snap => {
+        const r = snap.val(); selectedReportUser = r.reportedUser;
+        
+        document.getElementById('bannedSign').style.display = (r.status === 'closed' && r.wasBanned) ? 'block' : 'none';
+        document.getElementById('reportDetailTitle').textContent = "Evidence: Chat with " + r.reportedUser;
+        const content = document.getElementById('reportedChatContent');
+        content.innerHTML = "Fetching history...";
+
+        db.ref('privateMessages/' + r.chatId).once('value', chatSnap => {
+            content.innerHTML = "";
+            const msgs = chatSnap.val() || {};
+            const sortedMsgs = Object.values(msgs).sort((a,b) => a.timestamp - b.timestamp);
+            sortedMsgs.forEach(m => {
+                const p = document.createElement('div'); p.style.marginBottom = "5px";
+                p.style.opacity = m.deleted ? "0.6" : "1";
+                p.innerHTML = `<strong style="color:#00c50a">${m.from}:</strong> ${m.text} 
+                               ${m.deleted ? '<span style="color:red; font-size:9px;">[DELETED]</span>' : ''}
+                               <br><small style="font-size:9px; color:#888;">(${formatTime(m.timestamp)})</small>`;
+                content.appendChild(p);
+            });
+        });
+        open('maskViewReportedChat');
+      });
+    };
+
+    document.getElementById('btnDismissReport').onclick = () => {
+      if (currentViewingReportId) {
+        updateReportStatus(currentViewingReportId, 'dismissed');
+        close('maskViewReportedChat');
+        alert("Report moved to Dismissed.");
+      }
+    };
+
+    document.getElementById('btnBanReportedUser').onclick = () => {
+      if (!selectedReportUser || !currentViewingReportId) return;
+      window.banUser(selectedReportUser);
+      db.ref(`reports/${currentViewingReportId}`).update({ wasBanned: true, status: 'closed' });
+      close('maskViewReportedChat');
+    };
+
+    window.openUserProfile = function(targetUser) {
+      currentProfileTarget = targetUser;
+      const isBanned = bannedCache.includes(targetUser);
+      const rootPath = isBanned ? 'bannedUsers' : 'users';
+      
+      db.ref(`${rootPath}/${targetUser}/profile`).get().then(snap => {
+        const p = snap.val() || {};
+        const title = document.getElementById('profDisplayUsername');
+        title.textContent = targetUser;
+        title.className = isBanned ? 'banned-username' : '';
+        
+        document.getElementById('profBannedNotice').style.display = isBanned ? 'block' : 'none';
+        document.getElementById('profAboutLabel').textContent = isBanned ? '' : `About ${targetUser}:`;
+        document.getElementById('profCustomName').value = p.customName || '';
+        document.getElementById('profAbout').value = p.about || '';
+        document.getElementById('profBirthMonth').value = p.birthMonth || '';
+        document.getElementById('profBirthDay').value = p.birthDay || '';
+        
+        const isMe = (targetUser === currentUser), canEdit = (isMe || currentUser === 'Owner') && !isBanned;
+        document.getElementById('profCustomName').disabled = !canEdit; document.getElementById('profAbout').disabled = !canEdit;
+        document.getElementById('profBirthMonth').disabled = !canEdit; document.getElementById('profBirthDay').disabled = !canEdit;
+        
+        if (currentUser === 'Owner') {
+          document.getElementById('profDisplayType').style.display = 'none'; document.getElementById('profEditType').style.display = 'block';
+          document.getElementById('profEditType').value = p.userType || (targetUser === 'Owner' ? 'Owner' : 'User');
+        } else {
+          document.getElementById('profDisplayType').style.display = 'block'; document.getElementById('profEditType').style.display = 'none';
+          document.getElementById('profDisplayType').textContent = p.userType || 'User';
+        }
+        document.getElementById('btnSaveProfile').style.display = canEdit ? 'block' : 'none';
+        open('maskProfile');
+      });
+    };
+
+    btnProfile.onclick = () => openUserProfile(currentUser);
+    document.getElementById('btnSaveProfile').onclick = () => {
+      if(!currentProfileTarget) return;
+      const updates = { customName: document.getElementById('profCustomName').value.trim(), about: document.getElementById('profAbout').value.trim(), birthMonth: document.getElementById('profBirthMonth').value, birthDay: document.getElementById('profBirthDay').value };
+      if (currentUser === 'Owner') updates.userType = document.getElementById('profEditType').value;
+      db.ref('users/' + currentProfileTarget + '/profile').update(updates).then(() => { alert('Profile Saved!'); close('maskProfile'); });
     };
 
     showLogin();
+    window.addEventListener('beforeunload', () => {
+      if (currentUser && currentUser !== "Owner") { db.ref(`users/${currentUser}/online`).set(false); db.ref(`users/${currentUser}/lastSeen`).set(Date.now()); }
+    });
   </script>
 </body>
 </html>

@@ -86,4 +86,18 @@ body {
   #emoji-btn {
     font-size: 20px;
   }
+
   
+
+
+
+
+
+
+
+
+
+
+.profile-btn { position:absolute; top:10px; left:95px; } /* Positions it right next to Settings */
+  .profile-field { margin-top: 15px; text-align: left; }
+  .profile-field label { display: block; font-weight: bold; margin-bottom: 5px; color: #00c50a; }
