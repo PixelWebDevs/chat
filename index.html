@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Turtle Chat</title>
+<style>
+  :root { --black:#000; --dark-gray:#000000; --green:#228b22; --white:#fff; }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body,html { height:100%; background:var(--black); font-family:Arial,sans-serif; color:var(--white); display:flex; justify-content:center; align-items:center; }
+  #loginPage,#chatPage { width:100%; height:100%; flex-direction:column; justify-content:center; align-items:center; display:none; }
+  .form-group { margin:8px 0; }
+  input, textarea, select { padding:8px; border:none; border-radius:6px; width:200px; }
+  button { background:var(--green); border:none; padding:8px 16px; border-radius:6px; cursor:pointer; color:var(--white); transition:0.2s; margin:2px; }
+  button:hover { transform:scale(1.05); }
+  .logout-btn { position:absolute; top:10px; right:10px; background:crimson; }
+  #chatContainer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80vw; height:80vh; }
+  .chat-container { background:var(--dark-gray); border:5px solid var(--green); border-radius:30px; width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
+  .chat-area { flex:1; overflow-y:auto; padding:12px; }
+  .date-sep { text-align:center; margin:8px 0; color:var(--white); }
+  .tools, .user-tools, .owner-controls { display:flex; gap:8px; padding:8px; background:rgba(0,0,0,0.2); }
+  .tools input { flex:1; border-radius:6px; }
+  .message { position:relative; margin-bottom:6px; padding:6px; border-radius:6px; }
+  .message.self { background:rgba(34,139,34,0.3); text-align:right; }
+  .message.other { background:rgba(255,255,255,0.1); }
+  .message.system { font-style:italic; text-align:center; }
+  .message.system.normal { color:var(--white); }
+  .message.system.owner { color:red; }
+  .message.owner { color:red; }
+  .timestamp { font-size:11px; color:#ccc; margin-left:6px; }
+  .del-btn, .edit-btn { background:none; border:none; cursor:pointer; }
+  .del-btn { position:absolute; top:4px; right:4px; color:red; }
+  .edit-btn { position:absolute; top:4px; left:4px; color:gold; }
+  .fullscreen-btn { margin-left:auto; }
+  .modal-mask { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; }
+  .modal { background:#222; padding:16px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto; }
+  .modal h2 { margin-bottom:8px; }
+  .emoji-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-height:300px; overflow-y:auto; }
+  .react-btn, .viewers-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 8px;
+    color: gold;
+  }
+  .viewers-menu {
+    background: #222;
+    padding: 16px;
+    border-radius: 8px;
+    max-width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 200;
+  }
+  .viewers-menu button {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: crimson;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  #btnCancelReaction {
+    background: crimson;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    margin-left: 8px;
+  }
+  .audio-visualizer {
+    width: 100%;
+    height: 80px;
+    background: linear-gradient(135deg, rgba(34,139,34,0.1), rgba(0,197,10,0.1));
+    border-radius: 8px;
+    margin: 12px 0;
+    border: 2px solid rgba(34,139,34,0.3);
+  }
+  .recording-timer {
+    font-size: 24px;
+    font-weight: bold;
+    color: #00c50a;
+    text-align: center;
+    margin: 8px 0;
+    font-family: 'Courier New', monospace;
+    text-shadow: 0 0 10px rgba(0,197,10,0.5);
+  }
+  .recording-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background: #ff4444;
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 1s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+  .file-preview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin: 12px 0;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  .file-preview-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: rgba(34,139,34,0.2);
+    border: 1px solid rgba(34,139,34,0.4);
+    border-radius: 6px;
+    color: var(--white);
+  }
+  .file-icon {
+    font-size: 24px;
+    min-width: 30px;
+    text-align: center;
+  }
+  .file-info {
+    flex: 1;
+  }
+  .file-name {
+    font-weight: bold;
+    color: #00c50a;
+    word-break: break-word;
+  }
+  .file-size {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+  }
+  .file-remove-btn {
+    background: crimson;
+    border: none;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+  .file-remove-btn:hover {
+    transform: scale(1.05);
+  }
+  .file-input-area {
+    border: 2px dashed rgba(34,139,34,0.5);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 12px 0;
+    background: rgba(34,139,34,0.05);
+  }
+  .file-input-area:hover {
+    border-color: rgba(34,139,34,0.8);
+    background: rgba(34,139,34,0.1);
+  }
+  .file-input-area.drag-over {
+    border-color: #00c50a;
+    background: rgba(34,139,34,0.2);
+    transform: scale(1.02);
+  }
+  .file-input-label {
+    color: #00c50a;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  .audio-message-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 6px 0;
+  }
+  .audio-message-indicator {
+    font-size: 12px;
+    color: #00c50a;
+    font-weight: bold;
+  }
+
+ ::-webkit-scrollbar {
+ background-color: transparent;
+ width: 10px;
+ }
+ ::-webkit-scrollbar-thumb {
+ background: linear-gradient(#00c50a);
+ border-radius: 100px;
+ }
+</style>
+</head>
+<!-- LOGIN -->
+
+
+
+
+
+
+<div id="loginPage">
+  <h1>Turtle Chat</h1>
+  <div class="form-group"><input id="username" placeholder="Username"></div>
+  <div class="form-group"><input id="password" type="password" placeholder="Password"></div>
+  <div class="form-group">
+    <button id="btnLogin">Login</button>
+    <button id="btnSignUp">Sign Up</button>
+  </div>
+  <div class="form-group">
+    <input id="ttaCode" placeholder="TTA Code">
+    <button id="btnOwnerLogin">Admin Login</button>
+  </div>
+</div>
+
+
+
+
+<!-- CHAT -->
+<div id="chatPage">
+  <button class="logout-btn" id="btnLogout">Logout</button>
+  <div id="chatContainer">
+    <section class="chat-container">
+      <div class="owner-controls" id="ownerControls" style="display:none;">
+        <button id="btnViewAccounts">View Accounts</button>
+        <button id="btnToggleDelete">Delete Msgs</button>
+        <button id="btnEditMode">Edit Msgs</button>
+        <button id="btnAddAdmin" style="display:none;">Add Admin</button>
+      </div>
+      <div class="chat-area" id="chatArea"></div>
+      <div class="user-tools" id="userTools">
+        <button id="btnEmoji">Emoji</button>
+        <button id="btnAudio">Audio</button>
+        <button id="btnFile">File</button>
+        <button id="btnTurtleCall" onclick="location.href='turtlecall.html'">Turtle Call</button>
+        <button onclick="window.location.href='reportbug.html'">Report Bug</button>
+
+
+
+
+        <button id="btnFullscreen" class="fullscreen-btn">Full Screen</button>
+      </div>
+      <div class="tools" id="messageTools">
+        <input id="msgInput" placeholder="Type your message...">
+        <button id="btnCancelReaction" style="display:none;">✖</button> <!-- Bottone per annullare la reazione -->
+        <button id="btnSend">Send</button>
+      </div>
+    </section>
+  </div>
+</div>
+<!-- MODALS -->
+<div class="modal-mask" id="maskAccounts">
+  <div class="modal">
+    <h2>Accounts</h2>
+    <div id="accountsList"></div>
+    <button class="closeModal" data-target="maskAccounts">Close</button>
+  </div>
+</div>
+<div class="modal-mask" id="maskEmoji">
+  <div class="modal">
+    <h2>Select Emoji</h2>
+    <div class="emoji-grid" id="emojiList"></div>
+    <button class="closeModal" data-target="maskEmoji">Close</button>
+  </div>
+</div>
+<div class="modal-mask" id="maskFile">
+  <div class="modal">
+    <h2>Send File</h2>
+    <div class="file-input-area" id="fileDropArea">
+      <div>📁 Click to select or drag files here</div>
+      <input type="file" id="fileInput" multiple style="display:none;">
+    </div>
+    <div class="file-preview-container" id="filePreviewContainer" style="display:none;"></div>
+    <button id="btnSendFile" style="display:none; width:100%; padding:10px; margin:12px 0;">📤 Send Files</button>
+    <button class="closeModal" data-target="maskFile">Close</button>
+  </div>
+</div>
+<div class="modal-mask" id="maskAudio">
+  <div class="modal">
+    <h2>Record Audio</h2>
+    <div class="recording-timer" id="recordingTimer" style="display:none;"><span class="recording-indicator"></span>Recording: <span id="timerDisplay">00:00</span></div>
+    <canvas id="audioVisualizer" class="audio-visualizer" style="display:none;"></canvas>
+    <button id="startRec">🎤 Start Recording</button>
+    <button id="stopRec" disabled>⏹ Stop Recording</button>
+    <audio id="audioPreview" controls style="display:none;width:100%;margin:8px 0;"></audio>
+    <button id="btnSendAudio" disabled>✓ Send Audio</button>
+    <button class="closeModal" data-target="maskAudio">Close</button>
+  </div>
+</div>
+<div class="modal-mask" id="maskEditMsg">
+  <div class="modal">
+    <h2>Edit Message</h2>
+    <textarea id="editInput" rows="3" style="width:100%;"></textarea>
+    <button id="btnSaveEdit">Save</button>
+    <button class="closeModal" data-target="maskEditMsg">Close</button>
+  </div>
+</div>
+
+
+<!-- MODAL: Add Admin -->
+<div class="modal-mask" id="maskAddAdmin">
+  <div class="modal">
+    <h2>Add Admin</h2>
+    <div>
+      <h3>Create TTA Admin</h3>
+      <input id="adminCode" placeholder="Admin Code">
+      <input id="adminName" placeholder="Admin Name">
+      <input id="adminColor" type="color" value="#0000ff">
+      <button id="btnCreateAdmin">Create</button>
+    </div>
+    <hr>
+    <div>
+      <h3>Edit TTA Admin</h3>
+      <div id="adminList"></div>
+    </div>
+    <button class="closeModal" data-target="maskAddAdmin">Close</button>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  firebase.initializeApp({
+    apiKey:"AIzaSyCxPKZYqiBdlHTr6vUbIVIEvzwxpkeTOEQ",
+    authDomain:"turtle-chat-a93fb.firebaseapp.com",
+    databaseURL:"https://turtle-chat-a93fb-default-rtdb.firebaseio.com",
+    projectId:"turtle-chat-a93fb",
+    storageBucket:"turtle-chat-a93fb.appspot.com",
+    messagingSenderId:"338945234611",
+    appId:"1:338945234611:web:4abe6a3107bdee88b3c2c6"
+  });
+  const db = firebase.database();
+  const loginPage=document.getElementById('loginPage'), chatPage=document.getElementById('chatPage');
+  const usernameEl=document.getElementById('username'), passwordEl=document.getElementById('password');
+  const btnLogin=document.getElementById('btnLogin'), btnSignUp=document.getElementById('btnSignUp');
+  const ttaEl=document.getElementById('ttaCode'), btnOwner=document.getElementById('btnOwnerLogin');
+  const btnLogout=document.getElementById('btnLogout');
+  const btnSend=document.getElementById('btnSend'), msgInput=document.getElementById('msgInput'), chatArea=document.getElementById('chatArea');
+  const ownerCtr=document.getElementById('ownerControls'), userTools=document.getElementById('userTools'), msgTools=document.getElementById('messageTools');
+  const btnEmoji=document.getElementById('btnEmoji'), btnAudio=document.getElementById('btnAudio'), btnFile=document.getElementById('btnFile'), btnFs=document.getElementById('btnFullscreen');
+  const btnView=document.getElementById('btnViewAccounts'), btnDel=document.getElementById('btnToggleDelete'), btnEdit=document.getElementById('btnEditMode');
+  const editIn=document.getElementById('editInput'), btnSaveEd=document.getElementById('btnSaveEdit');
+  const btnCancelReaction = document.getElementById('btnCancelReaction');
+  const btnAddAdmin = document.getElementById('btnAddAdmin');
+  const adminCodeInput = document.getElementById('adminCode');
+  const adminNameInput = document.getElementById('adminName');
+  const adminColorInput = document.getElementById('adminColor');
+  const btnCreateAdmin = document.getElementById('btnCreateAdmin');
+  const adminList = document.getElementById('adminList');
+
+
+  let reactingTo = null;
+
+
+  function open(id){document.getElementById(id).style.display='flex';}
+  function close(id){document.getElementById(id).style.display='none';}
+  document.querySelectorAll('.closeModal').forEach(b=>b.onclick=()=>close(b.dataset.target));
+
+
+
+
+  const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😍','😘','😗','😙','😚','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🥳','🥺','😢','😭','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','😈','👿','👹','🚀','🎉','❤️','👍'];
+
+
+
+
+  let user=null, isOwner=false, editKey=null, delMode=false, editMode=false, userIsAdmin=false;
+
+
+
+
+  function sendSystem(text, ownerMsg=false){
+    db.ref('messages').push({user:'System',text,system:true,ownerMsg,timestamp:Date.now()});
+  }
+
+
+
+
+  function showLogin(){loginPage.style.display='flex';chatPage.style.display='none';}
+  function showChat(){
+    loginPage.style.display='none';
+    chatPage.style.display='flex';
+    
+    if (isOwner || userIsAdmin) {
+      ownerCtr.style.display = 'flex';
+      document.getElementById('btnAddAdmin').style.display = isOwner ? 'block' : 'none';
+    } else {
+      ownerCtr.style.display = 'none';
+    }
+    loadMsgs();
+  }
+
+
+
+
+  btnSignUp.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).set({password:p});alert('Created');};
+  btnLogin.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).get().then(s=>{const d=s.val();if(d&&d.password===p){user=u;showChat();sendSystem(`${u} has entered the chat`,false);}else alert('Invalid');});};
+  btnOwner.onclick=()=>{const code = ttaEl.value.trim(); db.ref('admins/' + code).get().then(snapshot => { const admin = snapshot.val(); if (admin) { user = admin.name; isOwner = false; userIsAdmin = true; showChat(); sendSystem(`${admin.name} has entered the chat`, false); chatArea.style.color = admin.color; } else if (code === 'tta-3-21-12') { user = 'Owner'; isOwner = true; userIsAdmin = false; showChat(); sendSystem('Owner has entered the chat', true); } else { alert('Invalid'); } }); };
+  btnLogout.onclick=()=>location.reload();
+
+
+
+
+  btnSend.onclick=()=>{const t=msgInput.value.trim();if(!t)return;const messageData = { user, text: t, timestamp: Date.now() }; if (reactingTo) { messageData.reactionTo = reactingTo; reactingTo = null; msgInput.placeholder = 'Type your message...'; btnCancelReaction.style.display = 'none'; } db.ref('messages').push(messageData);msgInput.value='';};
+  msgInput.onkeydown=e=>{if(e.key==='Enter')btnSend.click();};
+
+
+
+
+  btnDel.onclick=()=>{delMode=!delMode;loadMsgs();};
+  btnEdit.onclick=()=>{editMode=!editMode;loadMsgs();};
+
+
+
+
+  btnEmoji.onclick=()=>{open('maskEmoji'); const list=document.getElementById('emojiList'); list.innerHTML=''; EMOJIS.forEach(e=>{const b=document.createElement('button');b.textContent=e; b.onclick=()=>{msgInput.value+=e;close('maskEmoji');}; list.appendChild(b);});};
+  btnFile.onclick=()=>open('maskFile');
+  
+  // File upload functionality with preview
+  const fileInput = document.getElementById('fileInput');
+  const fileDropArea = document.getElementById('fileDropArea');
+  const filePreviewContainer = document.getElementById('filePreviewContainer');
+  const btnSendFile = document.getElementById('btnSendFile');
+  let selectedFiles = [];
+  
+  function getFileIcon(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    const iconMap = {
+      'pdf': '📄', 'doc': '📝', 'docx': '📝', 'txt': '📋',
+      'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'bmp': '🖼️',
+      'mp3': '🎵', 'wav': '🎵', 'mp4': '🎬', 'avi': '🎬', 'mov': '🎬',
+      'zip': '📦', 'rar': '📦', '7z': '📦',
+      'xls': '📊', 'xlsx': '📊', 'csv': '📊',
+      'ppt': '🎯', 'pptx': '🎯'
+    };
+    return iconMap[ext] || '📎';
+  }
+  
+  function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+  }
+  
+  function updateFilePreview() {
+    filePreviewContainer.innerHTML = '';
+    if (selectedFiles.length === 0) {
+      filePreviewContainer.style.display = 'none';
+      btnSendFile.style.display = 'none';
+      return;
+    }
+    filePreviewContainer.style.display = 'flex';
+    btnSendFile.style.display = 'block';
+    
+    selectedFiles.forEach((file, index) => {
+      const preview = document.createElement('div');
+      preview.className = 'file-preview-item';
+      
+      const icon = document.createElement('div');
+      icon.className = 'file-icon';
+      icon.textContent = getFileIcon(file.name);
+      
+      const info = document.createElement('div');
+      info.className = 'file-info';
+      
+      const name = document.createElement('div');
+      name.className = 'file-name';
+      name.textContent = file.name;
+      
+      const size = document.createElement('div');
+      size.className = 'file-size';
+      size.textContent = formatFileSize(file.size);
+      
+      info.appendChild(name);
+      info.appendChild(size);
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'file-remove-btn';
+      removeBtn.textContent = '✖ Remove';
+      removeBtn.onclick = () => {
+        selectedFiles.splice(index, 1);
+        updateFilePreview();
+      };
+      
+      preview.appendChild(icon);
+      preview.appendChild(info);
+      preview.appendChild(removeBtn);
+      filePreviewContainer.appendChild(preview);
+    });
+  }
+  
+  fileDropArea.onclick = () => fileInput.click();
+  
+  fileInput.onchange = (e) => {
+    selectedFiles = Array.from(e.target.files);
+    updateFilePreview();
+  };
+  
+  fileDropArea.ondragover = (e) => {
+    e.preventDefault();
+    fileDropArea.classList.add('drag-over');
+  };
+  
+  fileDropArea.ondragleave = () => {
+    fileDropArea.classList.remove('drag-over');
+  };
+  
+  fileDropArea.ondrop = (e) => {
+    e.preventDefault();
+    fileDropArea.classList.remove('drag-over');
+    selectedFiles = Array.from(e.dataTransfer.files);
+    updateFilePreview();
+  };
+  
+  document.getElementById('btnSendFile').onclick = () => {
+    selectedFiles.forEach(f => {
+      const r = new FileReader();
+      r.onload = () => db.ref('messages').push({
+        user,
+        text: `[file] ${f.name}`,
+        file: r.result,
+        timestamp: Date.now()
+      });
+      r.readAsDataURL(f);
+    });
+    selectedFiles = [];
+    fileInput.value = '';
+    updateFilePreview();
+    close('maskFile');
+  };
+  btnAudio.onclick=()=>open('maskAudio');
+  let recorder,chunks;
+  let audioContext, analyser, dataArray, animationId, recordingStartTime, timerInterval;
+  
+  document.getElementById('startRec').onclick=()=>navigator.mediaDevices.getUserMedia({audio:true}).then(st=>{
+    recorder=new MediaRecorder(st);
+    chunks=[];
+    recorder.ondataavailable=e=>chunks.push(e.data);
+    recorder.onstop=()=>{
+      const blob=new Blob(chunks),url=URL.createObjectURL(blob);
+      const audio=document.getElementById('audioPreview');
+      audio.src=url;
+      audio.style.display='block';
+      document.getElementById('btnSendAudio').disabled=false;
+      document.getElementById('recordingTimer').style.display='none';
+      document.getElementById('audioVisualizer').style.display='none';
+      cancelAnimationFrame(animationId);
+      clearInterval(timerInterval);
+    };
+    
+    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    const source = audioContext.createMediaStreamSource(st);
+    source.connect(analyser);
+    
+    dataArray = new Uint8Array(analyser.frequencyBinCount);
+    const canvas = document.getElementById('audioVisualizer');
+    const canvasCtx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    
+    recordingStartTime = Date.now();
+    document.getElementById('recordingTimer').style.display='block';
+    document.getElementById('audioVisualizer').style.display='block';
+    document.getElementById('startRec').disabled=true;
+    document.getElementById('stopRec').disabled=false;
+    
+    timerInterval = setInterval(() => {
+      const elapsed = Date.now() - recordingStartTime;
+      const minutes = Math.floor(elapsed / 60000);
+      const seconds = Math.floor((elapsed % 60000) / 1000);
+      document.getElementById('timerDisplay').textContent = `${String(minutes).padStart(2,'0')}:${String(seconds).padStart(2,'0')}`;
+    }, 100);
+    
+    function drawWaveform() {
+      animationId = requestAnimationFrame(drawWaveform);
+      analyser.getByteFrequencyData(dataArray);
+      canvasCtx.fillStyle = '#000000';
+      canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+      const barWidth = (canvas.width / dataArray.length) * 2.5;
+      let barHeight, x = 0;
+      for (let i = 0; i < dataArray.length; i++) {
+        barHeight = (dataArray[i] / 255) * canvas.height;
+        canvasCtx.fillStyle = `hsl(${(i / dataArray.length) * 120}, 100%, 50%)`;
+        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+        x += barWidth + 1;
+      }
+    }
+    
+    recorder.start();
+    drawWaveform();
+  });
+  document.getElementById('stopRec').onclick=()=>{
+    recorder.stop();
+    document.getElementById('startRec').disabled=false;
+    document.getElementById('stopRec').disabled=true;
+  };
+  document.getElementById('btnSendAudio').onclick=()=>{
+    const audio=document.getElementById('audioPreview');
+    fetch(audio.src).then(r=>r.blob()).then(b=>{
+      const r2=new FileReader();
+      r2.onload=()=>{
+        const messageData = {
+          user,
+          text:'[audio]',
+          audioUrl:r2.result,
+          timestamp:Date.now()
+        };
+        db.ref('messages').push(messageData);
+        // Reset UI after sending
+        document.getElementById('audioPreview').src = '';
+        document.getElementById('audioPreview').style.display = 'none';
+        document.getElementById('btnSendAudio').disabled = true;
+        document.getElementById('startRec').disabled = false;
+        document.getElementById('timerDisplay').textContent = '00:00';
+      };
+      r2.readAsDataURL(b);
+    });
+    close('maskAudio');
+  };
+  btnView.onclick=()=>{open('maskAccounts'); const list=document.getElementById('accountsList'); list.innerHTML=''; db.ref('users').get().then(s=>{const users=s.val()||{};Object.keys(users).forEach(u=>{const div=document.createElement('div');div.textContent=`${u}: ${users[u].password}`;const ban=document.createElement('button');ban.textContent='Ban';ban.onclick=()=>db.ref('users/'+u).remove().then(()=>btnView.click());div.appendChild(ban);list.appendChild(div);});});};
+
+
+
+
+  btnFs.onclick=()=>document.getElementById('chatContainer').requestFullscreen();
+
+
+
+
+  document.getElementById('btnSaveEdit').onclick=()=>{const t=document.getElementById('editInput').value.trim();if(editKey&&t)db.ref('messages/'+editKey+'/text').set(t);loadMsgs();close('maskEditMsg');};
+
+
+
+
+  function loadMsgs() {
+    chatArea.innerHTML = '';
+    db.ref('messages').orderByChild('timestamp').on('value', snap => {
+      chatArea.innerHTML = '';
+      let lastDate = '';
+      snap.forEach(ch => {
+        const m = ch.val(), key = ch.key;
+        const dt = new Date(m.timestamp), ds = dt.toLocaleDateString();
+        if (ds !== lastDate) {
+          const sep = document.createElement('div');
+          sep.className = 'date-sep';
+          sep.textContent = ds;
+          chatArea.appendChild(sep);
+          lastDate = ds;
+        }
+        const msgDiv = document.createElement('div');
+        if (m.system) {
+          msgDiv.className = 'message system ' + (m.ownerMsg ? 'owner' : 'normal');
+          msgDiv.textContent = m.text;
+          if (delMode && isOwner) {
+            const dbtn = document.createElement('button');
+            dbtn.className = 'del-btn';
+            dbtn.textContent = '✖';
+            dbtn.onclick = () => db.ref('messages/' + key).remove();
+            msgDiv.appendChild(dbtn);
+          }
+        } else {
+          msgDiv.className = 'message ' + (m.user === user ? 'self' : 'other') + (m.user === 'Owner' ? ' owner' : '');
+          const uEl = document.createElement('span');
+          uEl.textContent = m.user + ': ';
+          if (m.user === 'Owner') uEl.style.color = 'red';
+          else if (m.user !== user && m.user !== 'Owner') {
+            db.ref('admins').get().then(snapshot => {
+              const admins = snapshot.val() || {};
+              Object.keys(admins).forEach(code => {
+                if (admins[code].name === m.user) {
+                  uEl.style.color = admins[code].color;
+                }
+              });
+            });
+          }
+          const tEl = document.createElement('span');
+          const tsEl = document.createElement('span');
+          tsEl.className = 'timestamp';
+          tsEl.textContent = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+          msgDiv.append(uEl);
+
+          if (m.text.startsWith('[audio]')) {
+            const audioWrapper = document.createElement('div');
+            audioWrapper.className = 'audio-message-wrapper';
+            
+            const audioEl = document.createElement('audio');
+            audioEl.controls = true;
+            audioEl.src = m.audioUrl;
+            audioEl.style.width = '100%';
+            audioEl.style.maxWidth = '300px';
+            
+            audioWrapper.appendChild(audioEl);
+            msgDiv.appendChild(audioWrapper);
+          } else if (m.text.startsWith('[file]')) {
+            const fileLink = document.createElement('a');
+            fileLink.href = m.file;
+            fileLink.download = m.text.replace('[file] ', '');
+            fileLink.textContent = m.text.replace('[file] ', '');
+            tEl.appendChild(fileLink);
+            msgDiv.appendChild(tEl);
+          } else if (m.reactionTo) {
+            const reactionContainer = document.createElement('div');
+            reactionContainer.style.padding = '12px';
+            reactionContainer.style.marginBottom = '6px';
+            reactionContainer.style.borderRadius = '6px';
+            reactionContainer.style.backgroundColor = 'rgba(34,139,34,0.3)';
+
+            const originalMessage = document.createElement('div');
+            originalMessage.style.border = '2px solid blue';
+            originalMessage.style.backgroundColor = 'azure';
+            originalMessage.style.color = 'black';
+            originalMessage.style.padding = '8px';
+            originalMessage.style.marginBottom = '8px';
+            originalMessage.style.borderRadius = '6px';
+            originalMessage.textContent = `${m.reactionTo.user}: ${m.reactionTo.text}`;
+
+            const reactionMessage = document.createElement('div');
+            reactionMessage.textContent = m.text;
+
+            reactionContainer.appendChild(originalMessage);
+            reactionContainer.appendChild(reactionMessage);
+            msgDiv.appendChild(reactionContainer);
+          } else {
+            tEl.textContent = m.text;
+            msgDiv.appendChild(tEl);
+          }
+
+          msgDiv.appendChild(tsEl);
+
+
+          // React button
+          const reactBtn = document.createElement('button');
+          reactBtn.textContent = 'React';
+          reactBtn.className = 'react-btn';
+          reactBtn.onclick = () => reactBtnHandler({ user: m.user, text: m.text });
+          msgDiv.appendChild(reactBtn);
+
+
+          // Viewers button
+          const viewersBtn = document.createElement('button');
+          viewersBtn.innerHTML = '&#128065;'; // Eye icon
+          viewersBtn.className = 'viewers-btn';
+          viewersBtn.onclick = () => {
+            openViewersMenu(key, m.viewers || []);
+          };
+          msgDiv.appendChild(viewersBtn);
+
+
+          if (delMode && (isOwner || (user !== 'Owner' && isAdmin()))) {
+            const dbtn = document.createElement('button');
+            dbtn.className = 'del-btn';
+            dbtn.textContent = '✖';
+            dbtn.onclick = () => {
+              if (isOwner || m.user !== 'Owner') { // Permetti all'Owner di cancellare qualsiasi messaggio
+                db.ref('messages/' + key).remove();
+              } else {
+                alert('Cannot delete Owner messages');
+              }
+            };
+            msgDiv.appendChild(dbtn);
+          }
+          if (editMode && (isOwner || m.user === user)) {
+            const ebtn = document.createElement('button');
+            ebtn.className = 'edit-btn';
+            ebtn.textContent = '✎';
+            ebtn.onclick = () => {
+              editKey = key;
+              document.getElementById('editInput').value = m.text;
+              open('maskEditMsg');
+            };
+            msgDiv.appendChild(ebtn);
+          }
+        }
+        chatArea.appendChild(msgDiv);
+      });
+      chatArea.scrollTop = chatArea.scrollHeight;
+    });
+  }
+
+
+  function openViewersMenu(messageKey, viewers) {
+    const menu = document.createElement('div');
+    menu.className = 'viewers-menu';
+    menu.style.position = 'fixed';
+    menu.style.top = '50%';
+    menu.style.left = '50%';
+    menu.style.transform = 'translate(-50%, -50%)';
+    menu.style.backgroundColor = '#222';
+    menu.style.padding = '16px';
+    menu.style.borderRadius = '8px';
+    menu.style.zIndex = '200';
+    menu.style.maxWidth = '300px';
+    menu.style.maxHeight = '400px';
+    menu.style.overflowY = 'auto';
+
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✖';
+    closeBtn.style.position = 'absolute';
+    closeBtn.style.top = '8px';
+    closeBtn.style.right = '8px';
+    closeBtn.onclick = () => document.body.removeChild(menu);
+    menu.appendChild(closeBtn);
+
+
+    const title = document.createElement('h3');
+    title.textContent = 'Viewers';
+    menu.appendChild(title);
+
+
+    viewers.forEach(viewer => {
+      const viewerItem = document.createElement('div');
+      viewerItem.textContent = viewer;
+      menu.appendChild(viewerItem);
+    });
+
+
+    document.body.appendChild(menu);
+  }
+
+
+  // Funzione per annullare la reazione
+  btnCancelReaction.onclick = () => {
+    reactingTo = null;
+    msgInput.placeholder = 'Type your message...';
+    btnCancelReaction.style.display = 'none'; // Nascondi il bottone "X"
+  };
+
+
+  // Mostra il bottone "X" quando si sta reagendo a un messaggio
+  const reactBtnHandler = (message) => {
+    reactingTo = message;
+    msgInput.placeholder = `Reacting to ${message.user}`;
+    btnCancelReaction.style.display = 'inline-block'; // Mostra il bottone "X"
+  };
+
+
+  btnAddAdmin.onclick = () => {
+    open('maskAddAdmin');
+    loadAdmins();
+  };
+
+
+  btnCreateAdmin.onclick = () => {
+    const code = adminCodeInput.value.trim();
+    const name = adminNameInput.value.trim();
+    const color = adminColorInput.value.trim();
+    if (!code || !name || !color) {
+      alert('Fill all fields');
+      return;
+    }
+    db.ref('admins/' + code).set({ name, color });
+    alert('Admin created');
+    adminCodeInput.value = '';
+    adminNameInput.value = '';
+    adminColorInput.value = '#0000ff';
+    loadAdmins();
+  };
+
+
+  function loadAdmins() {
+    adminList.innerHTML = '';
+    db.ref('admins').get().then(snapshot => {
+      const admins = snapshot.val() || {};
+      Object.keys(admins).forEach(code => {
+        const admin = admins[code];
+        const div = document.createElement('div');
+        div.textContent = `${admin.name} (${code}) - ${admin.color}`;
+        const editBtn = document.createElement('button');
+        editBtn.textContent = 'Edit';
+        editBtn.onclick = () => editAdmin(code, admin);
+        const banBtn = document.createElement('button');
+        banBtn.textContent = 'Ban';
+        banBtn.onclick = () => {
+          db.ref('admins/' + code).remove().then(() => loadAdmins());
+        };
+        div.appendChild(editBtn);
+        div.appendChild(banBtn);
+        adminList.appendChild(div);
+      });
+    });
+  }
+
+
+  function editAdmin(code, admin) {
+    adminCodeInput.value = code;
+    adminNameInput.value = admin.name;
+    adminColorInput.value = admin.color;
+    btnCreateAdmin.onclick = () => {
+      const newCode = adminCodeInput.value.trim();
+      const newName = adminNameInput.value.trim();
+      const newColor = adminColorInput.value.trim();
+      if (!newCode || !newName || !newColor) {
+        alert('Fill all fields');
+        return;
+      }
+      db.ref('admins/' + code).remove().then(() => {
+        db.ref('admins/' + newCode).set({ name: newName, color: newColor });
+        alert('Admin updated');
+        adminCodeInput.value = '';
+        adminNameInput.value = '';
+        adminColorInput.value = '#0000ff';
+        loadAdmins();
+      });
+    };
+  }
+
+
+  function isAdmin() {
+    return isOwner || userIsAdmin;
+  }
+
+  // --- Notification: show system notification when new chat messages arrive while page is not visible ---
+  (function setupMessageNotifications(){
+    let initialLastTimestamp = 0;
+    // get latest message timestamp once to avoid notifying about historical messages
+    db.ref('messages').orderByChild('timestamp').limitToLast(1).get().then(snap=>{
+      snap.forEach(ch=>{ initialLastTimestamp = ch.val().timestamp || 0; });
+      // listen for new messages with timestamp greater than current last
+      db.ref('messages').orderByChild('timestamp').startAt(initialLastTimestamp + 1).on('child_added', snap2=>{
+        const m = snap2.val();
+        if (!m || m.system) return;
+        if (typeof user !== 'undefined' && m.user === user) return; // don't notify for your own messages
+        if (document.visibilityState !== 'visible' && Notification.permission === 'granted') {
+          navigator.serviceWorker.ready.then(reg=>{
+            reg.showNotification(m.user, {
+              body: m.text,
+              icon: 'icon.png',
+              tag: 'turtle-chat',
+              data: { url: window.location.href, messageKey: snap2.key }
+            });
+          }).catch(()=>{ try { new Notification(m.user, { body: m.text, icon: 'icon.png' }); } catch(e){} });
+        }
+      });
+    }).catch(()=>{ /* ignore */ });
+  })();
+
+  showLogin();
+});
+</script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+

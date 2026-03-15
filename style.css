@@ -1,0 +1,89 @@
+body {
+    background: linear-gradient(45deg, #ff8c00, #228b22);
+    animation: backgroundMove 10s infinite alternate;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+  }
+  
+  @keyframes backgroundMove {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+  }
+  
+  #logo {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #228b22;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+  
+  #logo:hover {
+    transform: scale(1.1);
+  }
+  
+  .chat-container {
+    display: none;
+    width: 80%;
+    margin: 100px auto;
+    padding: 20px;
+    background-color: #696969;
+    border-radius: 30px;
+    border: 5px solid #228b22;
+  }
+  
+  #login-container {
+    display: block;
+    text-align: center;
+  }
+  
+  #login-container input {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+  }
+  
+  #login-container button {
+    margin: 10px;
+    padding: 10px 20px;
+    background-color: #228b22;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  
+  #chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  #message-input {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+  }
+  
+  #message-input input {
+    flex: 1;
+    padding: 10px;
+    border-radius: 20px;
+  }
+  
+  #message-input button {
+    margin-left: 10px;
+    padding: 10px;
+    border-radius: 20px;
+    cursor: pointer;
+  }
+  
+  #emoji-btn {
+    font-size: 20px;
+  }
+  

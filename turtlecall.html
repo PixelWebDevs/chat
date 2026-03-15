@@ -1,0 +1,63 @@
+<html><head></head><body><iframe allow="camera; microphone; fullscreen; display-capture; autoplay" src="https://meet.jit.si/turtletechcall" style="height: 100%; width: 100%; border: 0px;"></iframe>
+
+    <style>
+        body {
+          margin: 0;
+          padding: 0;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          height: 100vh;
+          background-color: #121212;
+          font-family: sans-serif;
+        }
+    
+        #openCallBtn {
+          background-color: #064d36; /* verde scuro */
+          color: white;
+          border: none;
+          padding: 16px 32px;
+          font-size: 18px;
+          border-radius: 12px;
+          cursor: pointer;
+          transition: background-color 0.3s, transform 0.3s;
+        }
+    
+        #openCallBtn:hover {
+          background-color: #0a6a4f;
+          transform: scale(1.05);
+        }
+    
+        #fullscreenFrame {
+          display: none;
+          position: fixed;
+          top: 0; left: 0;
+          width: 100vw;
+          height: 100vh;
+          border: none;
+          z-index: 9999;
+        }
+      </style>
+    
+    
+    
+    <button id="openCallBtn">Full Screen</button>
+    
+    <iframe id="fullscreenFrame" allow="camera; microphone; fullscreen; display-capture; autoplay" src="https://meet.jit.si/turtletechcall" style="display: block;">
+    </iframe>
+    
+    <script>
+      const button = document.getElementById('openCallBtn');
+      const iframe = document.getElementById('fullscreenFrame');
+    
+      button.addEventListener('click', () => {
+        iframe.style.display = 'block';
+        if (iframe.requestFullscreen) {
+          iframe.requestFullscreen();
+        } else if (iframe.webkitRequestFullscreen) { /* Safari */
+          iframe.webkitRequestFullscreen();
+        } else if (iframe.msRequestFullscreen) { /* IE11 */
+          iframe.msRequestFullscreen();
+        }
+      });
+    </script></body></html>
