@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Turtle Chat</title>
+<title>Global Chat</title>
 <style>
-  :root { --black:#000; --dark-gray:#000000; --green:#228b22; --white:#fff; }
+  :root { --black:#181515; --dark-gray:#181515; --green:#3f1587; --white:#ffffff; }
   * { margin:0; padding:0; box-sizing:border-box; }
   body,html { height:100%; background:var(--black); font-family:Arial,sans-serif; color:var(--white); display:flex; justify-content:center; align-items:center; }
   #loginPage,#chatPage { width:100%; height:100%; flex-direction:column; justify-content:center; align-items:center; display:none; }
@@ -14,6 +14,8 @@
   button { background:var(--green); border:none; padding:8px 16px; border-radius:6px; cursor:pointer; color:var(--white); transition:0.2s; margin:2px; }
   button:hover { transform:scale(1.05); }
   .logout-btn { position:absolute; top:10px; right:10px; background:crimson; }
+  .settings-btn { position:absolute; top:10px; left:10px; }
+  .private-chats-btn { position:absolute; top:10px;}
   #chatContainer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80vw; height:80vh; }
   .chat-container { background:var(--dark-gray); border:5px solid var(--green); border-radius:30px; width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
   .chat-area { flex:1; overflow-y:auto; padding:12px; }
@@ -35,6 +37,9 @@
   .modal-mask { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); display:none; align-items:center; justify-content:center; z-index:100; }
   .modal { background:#222; padding:16px; border-radius:8px; max-width:90%; max-height:90%; overflow:auto; }
   .modal h2 { margin-bottom:8px; }
+  .modal input[type="color"] { width: 50px; height: 30px; border: none; cursor: pointer; margin-left: 10px; }
+  .modal label { display: block; margin-bottom: 5px; font-weight: bold; }
+  .modal #personalizedNamesList { max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 5px; margin-bottom: 10px; background: #333; }
   .emoji-grid { display:grid; grid-template-columns:repeat(8,1fr); gap:4px; max-height:300px; overflow-y:auto; }
   .react-btn, .viewers-btn {
     background: none;
@@ -192,10 +197,6 @@
  background-color: transparent;
  width: 10px;
  }
- ::-webkit-scrollbar-thumb {
- background: linear-gradient(#00c50a);
- border-radius: 100px;
- }
 </style>
 </head>
 <!-- LOGIN -->
@@ -206,13 +207,14 @@
 
 
 <div id="loginPage">
-  <h1>Turtle Chat</h1>
+  <h1>Global Chat</h1>
   <div class="form-group"><input id="username" placeholder="Username"></div>
   <div class="form-group"><input id="password" type="password" placeholder="Password"></div>
   <div class="form-group">
     <button id="btnLogin">Login</button>
     <button id="btnSignUp">Sign Up</button>
   </div>
+  <button class="private-chats-btn" onclick="location.href='privatechat.html'">Private Chats</button>
   <div class="form-group">
     <input id="ttaCode" placeholder="TTA Code">
     <button id="btnOwnerLogin">Admin Login</button>
@@ -225,6 +227,8 @@
 <!-- CHAT -->
 <div id="chatPage">
   <button class="logout-btn" id="btnLogout">Logout</button>
+  <button class="settings-btn" id="btnSettings">Settings</button>
+  <button class="private-chats-btn" onclick="location.href='privatechat.html'">Private Chats</button>
   <div id="chatContainer">
     <section class="chat-container">
       <div class="owner-controls" id="ownerControls" style="display:none;">
@@ -238,7 +242,7 @@
         <button id="btnEmoji">Emoji</button>
         <button id="btnAudio">Audio</button>
         <button id="btnFile">File</button>
-        <button id="btnTurtleCall" onclick="location.href='turtlecall.html'">Turtle Call</button>
+        <button id="btnTurtleCall" onclick="location.href='pixeldevscall.html'">Turtle Call</button>
         <button onclick="window.location.href='reportbug.html'">Report Bug</button>
 
 
@@ -323,6 +327,44 @@
   </div>
 </div>
 
+<!-- MODAL: Settings -->
+<div class="modal-mask" id="maskSettings">
+  <div class="modal">
+    <h2>Settings</h2>
+    <div style="margin-bottom: 20px;">
+      <label for="websiteBgColor">Website Background Color:</label>
+      <input type="color" id="websiteBgColor" value="#181515">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <label for="chatBgColor">Chat Background Color:</label>
+      <input type="color" id="chatBgColor" value="#181515">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <label for="buttonColor">Button Color:</label>
+      <input type="color" id="buttonColor" value="#3f1587">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <label for="buttonTextColor">Button Text Color:</label>
+      <input type="color" id="buttonTextColor" value="#ffffff">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <label for="scrollbarColor">*Reload Required or Logout and Login again* Scrollbar Color:</label>
+      <input type="color" id="scrollbarColor" value="#48326e">
+    </div>
+    <div style="margin-bottom: 20px;">
+      <h3>Personalized Names</h3>
+      <p style="font-size: 12px; color: #ccc; margin-bottom: 10px;">Set custom names for other users (only visible to you).</p>
+      <div id="personalizedNamesList"></div>
+      <button id="btnAddPersonalizedName">Add Personalized Name</button>
+    </div>
+    <div style="display: flex; gap: 10px; justify-content: space-between;">
+      <button id="btnSaveSettings">Save Settings</button>
+      <button id="btnResetSettings" style="background: crimson;">Reset to Default</button>
+    </div>
+    <button class="closeModal" data-target="maskSettings">Close</button>
+  </div>
+</div>
+
 
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -355,6 +397,16 @@ document.addEventListener('DOMContentLoaded',()=>{
   const adminColorInput = document.getElementById('adminColor');
   const btnCreateAdmin = document.getElementById('btnCreateAdmin');
   const adminList = document.getElementById('adminList');
+  const btnSettings = document.getElementById('btnSettings');
+  const websiteBgColorInput = document.getElementById('websiteBgColor');
+  const chatBgColorInput = document.getElementById('chatBgColor');
+  const buttonColorInput = document.getElementById('buttonColor');
+  const buttonTextColorInput = document.getElementById('buttonTextColor');
+  const scrollbarColorInput = document.getElementById('scrollbarColor');
+  const personalizedNamesList = document.getElementById('personalizedNamesList');
+  const btnAddPersonalizedName = document.getElementById('btnAddPersonalizedName');
+  const btnSaveSettings = document.getElementById('btnSaveSettings');
+  const btnResetSettings = document.getElementById('btnResetSettings');
 
 
   let reactingTo = null;
@@ -373,6 +425,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
   let user=null, isOwner=false, editKey=null, delMode=false, editMode=false, userIsAdmin=false;
+  let userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
 
 
 
@@ -380,6 +433,135 @@ document.addEventListener('DOMContentLoaded',()=>{
   function sendSystem(text, ownerMsg=false){
     db.ref('messages').push({user:'System',text,system:true,ownerMsg,timestamp:Date.now()});
   }
+
+  function loadUserSettings() {
+    db.ref('userSettings/' + user).get().then(snapshot => {
+      const settings = snapshot.val();
+      if (settings) {
+        userSettings = { ...{ buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} }, ...settings };
+      } else {
+        userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
+      }
+      applySettings();
+    }).catch(() => {
+      applySettings();
+    });
+  }
+
+  function saveUserSettings() {
+    db.ref('userSettings/' + user).set(userSettings);
+  }
+
+  function applySettings() {
+    // Apply background colors via CSS variables
+    document.documentElement.style.setProperty('--black', userSettings.websiteBgColor);
+    document.documentElement.style.setProperty('--dark-gray', userSettings.chatBgColor);
+    // Apply button color and text color
+    document.querySelectorAll('button').forEach(btn => {
+      if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal')) {
+        btn.style.backgroundColor = userSettings.buttonColor;
+        btn.style.color = userSettings.buttonTextColor;
+      }
+    });
+    // Apply scrollbar color
+    let scrollbarStyle = document.getElementById('scrollbar-style');
+    if (scrollbarStyle) {
+      scrollbarStyle.remove();
+    }
+    scrollbarStyle = document.createElement('style');
+    scrollbarStyle.id = 'scrollbar-style';
+    scrollbarStyle.textContent = `
+      .chat-area::-webkit-scrollbar-thumb {
+        background: ${userSettings.scrollbarColor} !important;
+        border-radius: 100px;
+      }
+    `;
+    document.head.appendChild(scrollbarStyle);
+  }
+
+  function openSettingsModal() {
+    websiteBgColorInput.value = userSettings.websiteBgColor;
+    chatBgColorInput.value = userSettings.chatBgColor;
+    buttonColorInput.value = userSettings.buttonColor;
+    buttonTextColorInput.value = userSettings.buttonTextColor;
+    scrollbarColorInput.value = userSettings.scrollbarColor;
+    renderPersonalizedNames();
+    open('maskSettings');
+  }
+
+  function renderPersonalizedNames() {
+    personalizedNamesList.innerHTML = '';
+    Object.keys(userSettings.personalizedNames).forEach(username => {
+      const div = document.createElement('div');
+      div.style.display = 'flex';
+      div.style.alignItems = 'center';
+      div.style.marginBottom = '5px';
+      
+      const label = document.createElement('span');
+      label.textContent = `${username}: `;
+      label.style.marginRight = '10px';
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = userSettings.personalizedNames[username];
+      input.style.marginRight = '10px';
+      
+      const saveBtn = document.createElement('button');
+      saveBtn.textContent = 'Save';
+      saveBtn.onclick = () => {
+        userSettings.personalizedNames[username] = input.value.trim();
+        renderPersonalizedNames();
+      };
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove';
+      removeBtn.style.backgroundColor = 'crimson';
+      removeBtn.onclick = () => {
+        delete userSettings.personalizedNames[username];
+        renderPersonalizedNames();
+      };
+      
+      div.appendChild(label);
+      div.appendChild(input);
+      div.appendChild(saveBtn);
+      div.appendChild(removeBtn);
+      personalizedNamesList.appendChild(div);
+    });
+  }
+
+  btnAddPersonalizedName.onclick = () => {
+    const username = prompt('Enter the username to personalize:');
+    if (username && username.trim()) {
+      const customName = prompt('Enter the custom name:');
+      if (customName && customName.trim()) {
+        userSettings.personalizedNames[username.trim()] = customName.trim();
+        renderPersonalizedNames();
+      }
+    }
+  };
+
+  btnSaveSettings.onclick = () => {
+    userSettings.websiteBgColor = websiteBgColorInput.value;
+    userSettings.chatBgColor = chatBgColorInput.value;
+    userSettings.buttonColor = buttonColorInput.value;
+    userSettings.buttonTextColor = buttonTextColorInput.value;
+    userSettings.scrollbarColor = scrollbarColorInput.value;
+    saveUserSettings();
+    applySettings();
+    loadMsgs(); // Refresh messages to apply personalized names
+    close('maskSettings');
+  };
+
+  btnResetSettings.onclick = () => {
+    if (confirm('Are you sure you want to reset all settings to default?')) {
+      userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
+      saveUserSettings();
+      applySettings();
+      loadMsgs(); // Refresh messages
+      close('maskSettings');
+      alert('Settings reset to default!');
+    }
+  };
 
 
 
@@ -395,6 +577,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     } else {
       ownerCtr.style.display = 'none';
     }
+    loadUserSettings();
     loadMsgs();
   }
 
@@ -403,7 +586,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   btnSignUp.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).set({password:p});alert('Created');};
   btnLogin.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).get().then(s=>{const d=s.val();if(d&&d.password===p){user=u;showChat();sendSystem(`${u} has entered the chat`,false);}else alert('Invalid');});};
-  btnOwner.onclick=()=>{const code = ttaEl.value.trim(); db.ref('admins/' + code).get().then(snapshot => { const admin = snapshot.val(); if (admin) { user = admin.name; isOwner = false; userIsAdmin = true; showChat(); sendSystem(`${admin.name} has entered the chat`, false); chatArea.style.color = admin.color; } else if (code === 'tta-3-21-12') { user = 'Owner'; isOwner = true; userIsAdmin = false; showChat(); sendSystem('Owner has entered the chat', true); } else { alert('Invalid'); } }); };
+  btnOwner.onclick=()=>{const code = ttaEl.value.trim(); if (!code) { alert('Fill'); return; } db.ref('admins/' + code).get().then(snapshot => { const admin = snapshot.val(); if (admin) { user = admin.name; isOwner = false; userIsAdmin = true; showChat(); sendSystem(`${admin.name} has entered the chat`, false); chatArea.style.color = admin.color; } else if (code === 'tta-3-21-12') { user = 'Owner'; isOwner = true; userIsAdmin = false; showChat(); sendSystem('Owner has entered the chat', true); } else { alert('TTA Code is Incorrect'); } }); };
   btnLogout.onclick=()=>location.reload();
 
 
@@ -421,8 +604,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 
-  btnEmoji.onclick=()=>{open('maskEmoji'); const list=document.getElementById('emojiList'); list.innerHTML=''; EMOJIS.forEach(e=>{const b=document.createElement('button');b.textContent=e; b.onclick=()=>{msgInput.value+=e;close('maskEmoji');}; list.appendChild(b);});};
+  btnEmoji.onclick=()=>{open('maskEmoji'); const list=document.getElementById('emojiList'); list.innerHTML=''; EMOJIS.forEach(e=>{const b=document.createElement('button');b.textContent=e; b.style.backgroundColor = userSettings.buttonColor; b.style.color = userSettings.buttonTextColor; b.onclick=()=>{msgInput.value+=e;close('maskEmoji');}; list.appendChild(b);});};
   btnFile.onclick=()=>open('maskFile');
+  btnSettings.onclick=()=>{openSettingsModal();};
   
   // File upload functionality with preview
   const fileInput = document.getElementById('fileInput');
@@ -673,7 +857,8 @@ document.addEventListener('DOMContentLoaded',()=>{
         } else {
           msgDiv.className = 'message ' + (m.user === user ? 'self' : 'other') + (m.user === 'Owner' ? ' owner' : '');
           const uEl = document.createElement('span');
-          uEl.textContent = m.user + ': ';
+          const displayName = userSettings.personalizedNames[m.user] || m.user;
+          uEl.textContent = displayName + ': ';
           if (m.user === 'Owner') uEl.style.color = 'red';
           else if (m.user !== user && m.user !== 'Owner') {
             db.ref('admins').get().then(snapshot => {
@@ -725,7 +910,8 @@ document.addEventListener('DOMContentLoaded',()=>{
             originalMessage.style.padding = '8px';
             originalMessage.style.marginBottom = '8px';
             originalMessage.style.borderRadius = '6px';
-            originalMessage.textContent = `${m.reactionTo.user}: ${m.reactionTo.text}`;
+            const displayName = userSettings.personalizedNames[m.reactionTo.user] || m.reactionTo.user;
+            originalMessage.textContent = `${displayName}: ${m.reactionTo.text}`;
 
             const reactionMessage = document.createElement('div');
             reactionMessage.textContent = m.text;
@@ -823,7 +1009,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     viewers.forEach(viewer => {
       const viewerItem = document.createElement('div');
-      viewerItem.textContent = viewer;
+      const displayName = userSettings.personalizedNames[viewer] || viewer;
+      viewerItem.textContent = displayName;
       menu.appendChild(viewerItem);
     });
 
@@ -842,8 +1029,9 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   // Mostra il bottone "X" quando si sta reagendo a un messaggio
   const reactBtnHandler = (message) => {
+    const displayName = userSettings.personalizedNames[message.user] || message.user;
     reactingTo = message;
-    msgInput.placeholder = `Reacting to ${message.user}`;
+    msgInput.placeholder = `Reacting to ${displayName}`;
     btnCancelReaction.style.display = 'inline-block'; // Mostra il bottone "X"
   };
 
