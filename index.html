@@ -15,7 +15,8 @@
   button:hover { transform:scale(1.05); }
   .logout-btn { position:absolute; top:10px; right:10px; background:crimson; }
   .settings-btn { position:absolute; top:10px; left:10px; }
-  .profile-btn { position:absolute; top:10px; left:95px; } /* Profile Button Position */
+  .profile-btn { position:absolute; top:10px; left:95px; }
+  .users-btn { position:absolute; top:10px; left:180px; background: #007bff; color: white; font-weight: bold; }
   .private-chats-btn { position:absolute; top:10px;}
   #chatContainer { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:80vw; height:80vh; }
   .chat-container { background:var(--dark-gray); border:5px solid var(--green); border-radius:30px; width:100%; height:100%; display:flex; flex-direction:column; overflow:hidden; }
@@ -69,6 +70,16 @@
   /* Profile Styles */
   .profile-field { margin-top: 15px; text-align: left; }
   .profile-field label { display: block; font-weight: bold; margin-bottom: 5px; color: #00c50a; }
+
+  /* User Management Styles */
+  .tab-container { display:flex; gap:5px; margin-bottom:8px; width:100%; }
+  .tab-btn { background: rgba(255,255,255,0.1); flex: 1; border-radius: 6px; padding: 8px; font-weight: bold; position: relative; color: white; border: none; cursor: pointer; }
+  .tab-btn.active { background: var(--green); }
+  .user-mgmt-item { background: rgba(255,255,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+  
+  /* Admin Perms */
+  .perm-checkboxes { display: flex; flex-direction: column; gap: 5px; margin: 15px 0; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; }
+  .perm-checkboxes label { font-weight: normal; color: white; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
 </style>
 </head>
 <body>
@@ -83,7 +94,7 @@
   </div>
   <button class="private-chats-btn" onclick="location.href='privatechat.html'">Private Chats</button>
   <div class="form-group">
-    <input id="ttaCode" placeholder="TTA Code">
+    <input id="ttaCode" placeholder="Pix Code">
     <button id="btnOwnerLogin">Admin Login</button>
   </div>
 </div>
@@ -92,6 +103,7 @@
   <button class="logout-btn" id="btnLogout">Logout</button>
   <button class="settings-btn" id="btnSettings">Settings</button>
   <button class="profile-btn" id="btnProfile">Profile</button>
+  <button class="users-btn" id="btnUsers" style="display:none;">Users</button>
   <button class="private-chats-btn" onclick="location.href='privatechat.html'">Private Chats</button>
   <div id="chatContainer">
     <section class="chat-container">
@@ -147,7 +159,7 @@
 </div>
 <div class="modal-mask" id="maskAudio">
   <div class="modal">
-    <h2>Record Audio</h2>
+    <h2>Record Audio *May not work*</h2>
     <div class="recording-timer" id="recordingTimer" style="display:none;"><span class="recording-indicator"></span>Recording: <span id="timerDisplay">00:00</span></div>
     <canvas id="audioVisualizer" class="audio-visualizer" style="display:none;"></canvas>
     <button id="startRec">🎤 Start Recording</button>
@@ -170,18 +182,27 @@
   <div class="modal">
     <h2>Add Admin</h2>
     <div>
-      <h3>Create TTA Admin</h3>
+      <h3 id="adminFormTitle">Create Pix Admin</h3>
       <input id="adminCode" placeholder="Admin Code">
       <input id="adminName" placeholder="Admin Name">
       <input id="adminColor" type="color" value="#0000ff">
+      
+      <div class="perm-checkboxes">
+        <strong>Permissions:</strong>
+        <label><input type="checkbox" id="permDelete"> Delete Messages</label>
+        <label><input type="checkbox" id="permEdit"> Edit Messages</label>
+        <label><input type="checkbox" id="permAccounts"> View Accounts</label>
+        <label><input type="checkbox" id="permUsers"> Manage Users</label>
+      </div>
+
       <button id="btnCreateAdmin">Create</button>
     </div>
-    <hr>
+    <hr style="margin: 15px 0;">
     <div>
-      <h3>Edit TTA Admin</h3>
+      <h3>Edit Pix Admin</h3>
       <div id="adminList"></div>
     </div>
-    <button class="closeModal" data-target="maskAddAdmin">Close</button>
+    <button class="closeModal" data-target="maskAddAdmin" style="margin-top: 10px; background: crimson;">Close</button>
   </div>
 </div>
 
@@ -275,6 +296,18 @@
   </div>
 </div>
 
+<div class="modal-mask" id="maskUsers">
+  <div class="modal" style="max-width: 700px;">
+    <h2>User Management</h2>
+    <div class="tab-container">
+      <button class="tab-btn active" id="tabNotBanned" onclick="switchMgmtTab('not_banned')">Not Banned</button>
+      <button class="tab-btn" id="tabBanned" onclick="switchMgmtTab('banned')">Banned</button>
+    </div>
+    <div id="mgmtList" style="max-height: 50vh; overflow-y: auto; margin: 15px 0;"></div>
+    <button class="closeModal" data-target="maskUsers" style="background: crimson;">Close</button>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 <script>
@@ -300,12 +333,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   const btnView=document.getElementById('btnViewAccounts'), btnDel=document.getElementById('btnToggleDelete'), btnEdit=document.getElementById('btnEditMode');
   const editIn=document.getElementById('editInput'), btnSaveEd=document.getElementById('btnSaveEdit');
   const btnCancelReaction = document.getElementById('btnCancelReaction');
+  
   const btnAddAdmin = document.getElementById('btnAddAdmin');
   const adminCodeInput = document.getElementById('adminCode');
   const adminNameInput = document.getElementById('adminName');
   const adminColorInput = document.getElementById('adminColor');
+  const permDelete = document.getElementById('permDelete');
+  const permEdit = document.getElementById('permEdit');
+  const permAccounts = document.getElementById('permAccounts');
+  const permUsers = document.getElementById('permUsers');
   const btnCreateAdmin = document.getElementById('btnCreateAdmin');
   const adminList = document.getElementById('adminList');
+  
   const btnSettings = document.getElementById('btnSettings');
   const websiteBgColorInput = document.getElementById('websiteBgColor');
   const chatBgColorInput = document.getElementById('chatBgColor');
@@ -317,6 +356,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   const btnSaveSettings = document.getElementById('btnSaveSettings');
   const btnResetSettings = document.getElementById('btnResetSettings');
   const btnProfile = document.getElementById('btnProfile');
+  const btnUsers = document.getElementById('btnUsers');
 
   let reactingTo = null;
   let currentProfileTarget = null;
@@ -327,7 +367,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
   const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😍','😘','😗','😙','😚','😋','😛','😜','🤪','🤨','🧐','🤓','😎','🥳','🥺','😢','😭','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','😈','👿','👹','🚀','🎉','❤️','👍'];
 
-  let user=null, isOwner=false, editKey=null, delMode=false, editMode=false, userIsAdmin=false;
+  let user=null, isOwner=false, editKey=null, delMode=false, editMode=false, userIsAdmin=false, adminPerms={};
   let userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {} };
 
   function sendSystem(text, ownerMsg=false){
@@ -356,7 +396,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.documentElement.style.setProperty('--black', userSettings.websiteBgColor);
     document.documentElement.style.setProperty('--dark-gray', userSettings.chatBgColor);
     document.querySelectorAll('button').forEach(btn => {
-      if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal')) {
+      if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal') && !btn.classList.contains('users-btn')) {
         btn.style.backgroundColor = userSettings.buttonColor;
         btn.style.color = userSettings.buttonTextColor;
       }
@@ -460,24 +500,65 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
   };
 
-  function showLogin(){loginPage.style.display='flex';chatPage.style.display='none';}
+  function showLogin(){
+      loginPage.style.display='flex';
+      chatPage.style.display='none';
+      btnUsers.style.display='none';
+  }
+  
   function showChat(){
     loginPage.style.display='none';
     chatPage.style.display='flex';
     
     if (isOwner || userIsAdmin) {
       ownerCtr.style.display = 'flex';
+      
       document.getElementById('btnAddAdmin').style.display = isOwner ? 'block' : 'none';
+      document.getElementById('btnToggleDelete').style.display = (isOwner || adminPerms.canDeleteMsgs) ? 'block' : 'none';
+      document.getElementById('btnEditMode').style.display = (isOwner || adminPerms.canEditMsgs) ? 'block' : 'none';
+      document.getElementById('btnViewAccounts').style.display = (isOwner || adminPerms.canViewAccounts) ? 'block' : 'none';
+      
+      btnUsers.style.display = (isOwner || adminPerms.canManageUsers) ? 'block' : 'none';
     } else {
       ownerCtr.style.display = 'none';
+      btnUsers.style.display = 'none';
     }
+    
     loadUserSettings();
     loadMsgs();
   }
 
-  btnSignUp.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).set({password:p});alert('Created');};
+  btnSignUp.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).set({password:p, createdAt: Date.now()});alert('Created');};
+  
   btnLogin.onclick=()=>{const u=usernameEl.value.trim(),p=passwordEl.value.trim();if(!u||!p){alert('Fill');return;}db.ref('users/'+u).get().then(s=>{const d=s.val();if(d&&d.password===p){user=u;showChat();sendSystem(`${u} has entered the chat`,false);}else alert('Invalid');});};
-  btnOwner.onclick=()=>{const code = ttaEl.value.trim(); if (!code) { alert('Fill'); return; } db.ref('admins/' + code).get().then(snapshot => { const admin = snapshot.val(); if (admin) { user = admin.name; isOwner = false; userIsAdmin = true; showChat(); sendSystem(`${admin.name} has entered the chat`, false); chatArea.style.color = admin.color; } else if (code === 'tta-3-21-12') { user = 'Owner'; isOwner = true; userIsAdmin = false; showChat(); sendSystem('Owner has entered the chat', true); } else { alert('TTA Code is Incorrect'); } }); };
+  
+  btnOwner.onclick=()=>{
+      const code = ttaEl.value.trim(); 
+      if (!code) { alert('Fill'); return; } 
+      
+      db.ref('admins/' + code).get().then(snapshot => { 
+          const admin = snapshot.val(); 
+          if (admin) { 
+              user = admin.name; 
+              isOwner = false; 
+              userIsAdmin = true; 
+              adminPerms = admin.permissions || {};
+              showChat(); 
+              sendSystem(`${admin.name} has entered the chat`, false); 
+              chatArea.style.color = admin.color; 
+          } else if (code === 'pd-html') { 
+              user = 'Owner'; 
+              isOwner = true; 
+              userIsAdmin = false; 
+              adminPerms = { canDeleteMsgs: true, canEditMsgs: true, canViewAccounts: true, canManageUsers: true };
+              showChat(); 
+              sendSystem('Owner has entered the chat', true); 
+          } else { 
+              alert('Pix Code is Incorrect'); 
+          } 
+      }); 
+  };
+  
   btnLogout.onclick=()=>location.reload();
 
   btnSend.onclick=()=>{const t=msgInput.value.trim();if(!t)return;const messageData = { user, text: t, timestamp: Date.now() }; if (reactingTo) { messageData.reactionTo = reactingTo; reactingTo = null; msgInput.placeholder = 'Type your message...'; btnCancelReaction.style.display = 'none'; } db.ref('messages').push(messageData);msgInput.value='';};
@@ -700,7 +781,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         if (m.system) {
           msgDiv.className = 'message system ' + (m.ownerMsg ? 'owner' : 'normal');
           msgDiv.textContent = m.text;
-          if (delMode && isOwner) {
+          if (delMode && (isOwner || (userIsAdmin && adminPerms.canDeleteMsgs))) {
             const dbtn = document.createElement('button');
             dbtn.className = 'del-btn';
             dbtn.textContent = '✖';
@@ -801,7 +882,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           viewersBtn.onclick = () => { openViewersMenu(key, m.viewers || []); };
           msgDiv.appendChild(viewersBtn);
 
-          if (delMode && (isOwner || (user !== 'Owner' && isAdmin()))) {
+          if (delMode && (isOwner || (userIsAdmin && adminPerms.canDeleteMsgs))) {
             const dbtn = document.createElement('button');
             dbtn.className = 'del-btn';
             dbtn.textContent = '✖';
@@ -814,7 +895,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             };
             msgDiv.appendChild(dbtn);
           }
-          if (editMode && (isOwner || m.user === user)) {
+          if (editMode && (isOwner || m.user === user || (userIsAdmin && adminPerms.canEditMsgs))) {
             const ebtn = document.createElement('button');
             ebtn.className = 'edit-btn';
             ebtn.textContent = '✎';
@@ -882,20 +963,52 @@ document.addEventListener('DOMContentLoaded',()=>{
     btnCancelReaction.style.display = 'inline-block'; 
   };
 
-  btnAddAdmin.onclick = () => { open('maskAddAdmin'); loadAdmins(); };
+  btnAddAdmin.onclick = () => { 
+      document.getElementById('adminFormTitle').textContent = 'Create Pix Admin';
+      btnCreateAdmin.textContent = 'Create';
+      
+      adminCodeInput.value = '';
+      adminNameInput.value = '';
+      adminColorInput.value = '#0000ff';
+      permDelete.checked = false;
+      permEdit.checked = false;
+      permAccounts.checked = false;
+      permUsers.checked = false;
+      
+      btnCreateAdmin.onclick = createAdminHandler;
+      
+      open('maskAddAdmin'); 
+      loadAdmins(); 
+  };
 
-  btnCreateAdmin.onclick = () => {
+  const createAdminHandler = () => {
     const code = adminCodeInput.value.trim();
     const name = adminNameInput.value.trim();
     const color = adminColorInput.value.trim();
+    
+    const permissions = {
+        canDeleteMsgs: permDelete.checked,
+        canEditMsgs: permEdit.checked,
+        canViewAccounts: permAccounts.checked,
+        canManageUsers: permUsers.checked
+    };
+    
     if (!code || !name || !color) { alert('Fill all fields'); return; }
-    db.ref('admins/' + code).set({ name, color });
+    
+    db.ref('admins/' + code).set({ name, color, permissions });
     alert('Admin created');
+    
     adminCodeInput.value = '';
     adminNameInput.value = '';
     adminColorInput.value = '#0000ff';
+    permDelete.checked = false;
+    permEdit.checked = false;
+    permAccounts.checked = false;
+    permUsers.checked = false;
+    
     loadAdmins();
   };
+  btnCreateAdmin.onclick = createAdminHandler;
 
   function loadAdmins() {
     adminList.innerHTML = '';
@@ -905,12 +1018,16 @@ document.addEventListener('DOMContentLoaded',()=>{
         const admin = admins[code];
         const div = document.createElement('div');
         div.textContent = `${admin.name} (${code}) - ${admin.color}`;
+        div.style.marginBottom = "5px";
+        
         const editBtn = document.createElement('button');
         editBtn.textContent = 'Edit';
         editBtn.onclick = () => editAdmin(code, admin);
+        
         const banBtn = document.createElement('button');
         banBtn.textContent = 'Ban';
         banBtn.onclick = () => { db.ref('admins/' + code).remove().then(() => loadAdmins()); };
+        
         div.appendChild(editBtn);
         div.appendChild(banBtn);
         adminList.appendChild(div);
@@ -919,26 +1036,52 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   function editAdmin(code, admin) {
+    document.getElementById('adminFormTitle').textContent = 'Edit Pix Admin';
+    btnCreateAdmin.textContent = 'Save Changes';
+    
     adminCodeInput.value = code;
     adminNameInput.value = admin.name;
     adminColorInput.value = admin.color;
+    
+    const p = admin.permissions || {};
+    permDelete.checked = !!p.canDeleteMsgs;
+    permEdit.checked = !!p.canEditMsgs;
+    permAccounts.checked = !!p.canViewAccounts;
+    permUsers.checked = !!p.canManageUsers;
+    
     btnCreateAdmin.onclick = () => {
       const newCode = adminCodeInput.value.trim();
       const newName = adminNameInput.value.trim();
       const newColor = adminColorInput.value.trim();
+      const permissions = {
+        canDeleteMsgs: permDelete.checked,
+        canEditMsgs: permEdit.checked,
+        canViewAccounts: permAccounts.checked,
+        canManageUsers: permUsers.checked
+      };
+      
       if (!newCode || !newName || !newColor) { alert('Fill all fields'); return; }
+      
       db.ref('admins/' + code).remove().then(() => {
-        db.ref('admins/' + newCode).set({ name: newName, color: newColor });
+        db.ref('admins/' + newCode).set({ name: newName, color: newColor, permissions });
         alert('Admin updated');
+        
         adminCodeInput.value = '';
         adminNameInput.value = '';
         adminColorInput.value = '#0000ff';
+        permDelete.checked = false;
+        permEdit.checked = false;
+        permAccounts.checked = false;
+        permUsers.checked = false;
+        
+        document.getElementById('adminFormTitle').textContent = 'Create Pix Admin';
+        btnCreateAdmin.textContent = 'Create';
+        btnCreateAdmin.onclick = createAdminHandler;
+        
         loadAdmins();
       });
     };
   }
-
-  function isAdmin() { return isOwner || userIsAdmin; }
 
   // Profile Logic
   window.openUserProfile = function(targetUser) {
@@ -996,6 +1139,66 @@ document.addEventListener('DOMContentLoaded',()=>{
       alert('Profile Saved!');
       close('maskProfile');
     });
+  };
+
+  // User Management logic integration
+  btnUsers.onclick = () => { open('maskUsers'); switchMgmtTab('not_banned'); };
+  
+  window.switchMgmtTab = function(tab) {
+      document.getElementById('tabNotBanned').classList.toggle('active', tab === 'not_banned');
+      document.getElementById('tabBanned').classList.toggle('active', tab === 'banned');
+      renderMgmtList(tab);
+  };
+
+  window.renderMgmtList = function(tab) {
+      const list = document.getElementById('mgmtList');
+      list.innerHTML = "Loading...";
+      const refPath = tab === 'not_banned' ? 'users' : 'bannedUsers';
+      db.ref(refPath).once('value', snap => {
+          list.innerHTML = "";
+          const users = snap.val() || {};
+          Object.keys(users).forEach(u => {
+              if(u === 'Owner') return;
+              const data = users[u];
+              const item = document.createElement('div');
+              item.className = 'user-mgmt-item';
+              if(tab === 'not_banned') {
+                  item.innerHTML = `
+                      <div>
+                          <strong>${u}</strong><br>
+                          <small>PW: ${data.password} | Created: ${new Date(data.createdAt || 0).toLocaleDateString()}</small>
+                      </div>
+                      <button onclick="banUser('${u}')" style="background:crimson;">Ban</button>
+                  `;
+              } else {
+                  item.innerHTML = `<div><strong>${u}</strong></div><button onclick="unbanUser('${u}')" style="background:#28a745;">Unban</button>`;
+              }
+              list.appendChild(item);
+          });
+      });
+  };
+
+  window.banUser = function(u) {
+      if(!confirm(`Ban ${u} and delete active account?`)) return;
+      db.ref('users/'+u).once('value', snap => {
+          const data = snap.val();
+          db.ref('bannedUsers/'+u).set(data).then(() => {
+              db.ref('users/'+u).remove();
+              alert(u + " banned.");
+              renderMgmtList('not_banned');
+          });
+      });
+  };
+
+  window.unbanUser = function(u) {
+      db.ref('bannedUsers/'+u).once('value', snap => {
+          const data = snap.val();
+          db.ref('users/'+u).set(data).then(() => {
+              db.ref('bannedUsers/'+u).remove();
+              alert(u + " unbanned.");
+              renderMgmtList('banned');
+          });
+      });
   };
 
   (function setupMessageNotifications(){

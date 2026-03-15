@@ -19,6 +19,7 @@
     .profile-btn { position:absolute; top:10px; left:95px; }
     .reported-btn { position:absolute; top:10px; left:180px; background: #ffc107; color: #000; font-weight: bold; }
     .users-btn { position:absolute; top:10px; left:265px; background: #007bff; color: white; font-weight: bold; }
+    .add-admin-btn { position:absolute; top:10px; left:335px; background: #8a2be2; color: white; font-weight: bold; }
     .private-chat-container { width:80vw; height:80vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; }
     
     .tab-container { display:flex; gap:5px; margin-bottom:8px; width:100%; }
@@ -60,6 +61,10 @@
     .report-log-container { background:#111; padding:10px; margin:10px 0; border-radius:8px; max-height:400px; overflow-y:auto; text-align:left; font-size:13px; color: #eee; }
     
     .sign-banned { background: #dc3545; color: white; padding: 5px; border-radius: 4px; text-align: center; font-weight: bold; margin-bottom: 10px; display: none; }
+    
+    /* Admin Perms */
+    .perm-checkboxes { display: flex; flex-direction: column; gap: 5px; margin: 15px 0; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px; }
+    .perm-checkboxes label { font-weight: normal; color: white; cursor: pointer; display: flex; align-items: center; gap: 8px; margin-bottom: 0; }
   </style>
 </head>
 <body>
@@ -67,10 +72,10 @@
   <div id="notificationContainer"></div>
 
   <button class="global-chat-btn" onclick="location.href='index.html'">Global Chat</button>
-  <button class="settings-btn" id="btnSettings">Settings</button>
   <button class="profile-btn" id="btnProfile" style="display:none;">Profile</button>
   <button class="reported-btn" id="btnReported" style="display:none;">Reported</button>
   <button class="users-btn" id="btnUsers" style="display:none;">Users</button>
+  <button class="add-admin-btn" id="btnAddAdmin" style="display:none;">Add Admin</button>
 
   <div id="loginPage">
     <h1>Private Chats</h1>
@@ -81,7 +86,7 @@
       <button id="btnSignUp">Sign Up</button>
     </div>
     <div class="form-group">
-      <input id="ttaCode" placeholder="TTA Code">
+      <input id="ttaCode" placeholder="Pix Code">
       <button id="btnOwnerLogin">Admin Login</button>
     </div>
   </div>
@@ -91,6 +96,7 @@
     <div class="private-chat-container">
       <div id="userListView" style="width:100%; max-width:800px;">
         <h2>Private Chats</h2>
+          <button class="settings-btn" id="btnSettings">Settings</button>
         <input id="userSearch" placeholder="Search users..." style="width:100%; padding:8px; border-radius:6px; border:none; margin:8px 0;" />
         <div class="tab-container">
           <button class="tab-btn active" id="tabChats">Chats</button>
@@ -127,6 +133,32 @@
       </div>
       <div id="mgmtList" style="max-height: 50vh; overflow-y: auto; margin: 15px 0;"></div>
       <button class="closeModal" data-target="maskUsers" style="background: crimson;">Close</button>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="maskAddAdmin">
+    <div class="modal">
+      <h2>Add Admin</h2>
+      <div>
+        <h3 id="adminFormTitle">Create Pix Admin</h3>
+        <input id="adminCode" placeholder="Admin Code" style="margin-bottom: 5px;">
+        <input id="adminName" placeholder="Admin Name" style="margin-bottom: 5px;">
+        <input id="adminColor" type="color" value="#0000ff" style="width: 50px; height: 30px; padding: 0; cursor: pointer;">
+        
+        <div class="perm-checkboxes">
+          <strong>Permissions:</strong>
+          <label><input type="checkbox" id="permReports"> View Reports</label>
+          <label><input type="checkbox" id="permUsers"> Manage Users</label>
+        </div>
+
+        <button id="btnCreateAdmin">Create</button>
+      </div>
+      <hr style="margin: 15px 0; border-color: #444;">
+      <div>
+        <h3>Edit Pix Admin</h3>
+        <div id="adminList" style="max-height: 200px; overflow-y: auto;"></div>
+      </div>
+      <button class="closeModal" data-target="maskAddAdmin" style="margin-top: 10px; background: crimson;">Close</button>
     </div>
   </div>
 
@@ -273,6 +305,16 @@
     const btnUsers = document.getElementById('btnUsers');
     const btnOwnerLogin = document.getElementById('btnOwnerLogin');
     const ttaCodeEl = document.getElementById('ttaCode');
+    
+    // Add Admin Elements
+    const btnAddAdmin = document.getElementById('btnAddAdmin');
+    const adminCodeInput = document.getElementById('adminCode');
+    const adminNameInput = document.getElementById('adminName');
+    const adminColorInput = document.getElementById('adminColor');
+    const permReports = document.getElementById('permReports');
+    const permUsers = document.getElementById('permUsers');
+    const btnCreateAdmin = document.getElementById('btnCreateAdmin');
+    const adminList = document.getElementById('adminList');
 
     const userSearch = document.getElementById('userSearch');
     const userList = document.getElementById('userList');
@@ -314,6 +356,8 @@
     let selectedReportUser = null;
     let currentViewingReportId = null;
     let banListenerRef = null;
+    let userIsAdmin = false;
+    let adminPerms = {};
 
     let userSettings = { buttonColor: '#3f1587', scrollbarColor: '#48326e', buttonTextColor: '#ffffff', websiteBgColor: '#181515', chatBgColor: '#181515', personalizedNames: {}, borderColor: '#3f1587' };
 
@@ -394,31 +438,46 @@
       btnProfile.style.display = 'none';
       btnReported.style.display = 'none';
       btnUsers.style.display = 'none';
+      btnAddAdmin.style.display = 'none';
       close('maskSettings');
       close('maskProfile');
       close('maskReports');
       close('maskUsers');
+      close('maskAddAdmin');
     }
 
     function showChat() {
       loginPage.style.display = 'none';
       privateChatPage.style.display = 'flex';
       btnProfile.style.display = 'block';
-      if(currentUser === 'Owner') {
+      
+      if (currentUser === 'Owner') {
           btnReported.style.display = 'block';
           btnUsers.style.display = 'block';
+          btnAddAdmin.style.display = 'block';
+      } else if (userIsAdmin) {
+          btnReported.style.display = adminPerms.canViewReports ? 'block' : 'none';
+          btnUsers.style.display = adminPerms.canManageUsers ? 'block' : 'none';
+          btnAddAdmin.style.display = 'none';
+      } else {
+          btnReported.style.display = 'none';
+          btnUsers.style.display = 'none';
+          btnAddAdmin.style.display = 'none';
       }
+
       showUserListView();
       loadUsers();
       loadUserSettings();
       
-      db.ref(`users/${currentUser}/online`).set(true);
-      db.ref(`users/${currentUser}/lastSeen`).set(Date.now());
+      if (!userIsAdmin && currentUser !== 'Owner') {
+          db.ref(`users/${currentUser}/online`).set(true);
+          db.ref(`users/${currentUser}/lastSeen`).set(Date.now());
+      }
 
       if (banListenerRef) banListenerRef.off();
       banListenerRef = db.ref(`users/${currentUser}`);
       banListenerRef.on('value', snap => {
-          if (currentUser && !snap.exists()) {
+          if (currentUser && currentUser !== 'Owner' && !userIsAdmin && !snap.exists()) {
               alert("You have been permanently banned");
               location.reload(); 
           }
@@ -678,7 +737,7 @@
       document.documentElement.style.setProperty('--black', userSettings.websiteBgColor);
       document.documentElement.style.setProperty('--dark-gray', userSettings.chatBgColor);
       document.querySelectorAll('button').forEach(btn => {
-        if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal') && !btn.classList.contains('reported-btn') && !btn.classList.contains('users-btn')) {
+        if (!btn.classList.contains('logout-btn') && !btn.classList.contains('closeModal') && !btn.classList.contains('reported-btn') && !btn.classList.contains('users-btn') && !btn.classList.contains('add-admin-btn')) {
           btn.style.backgroundColor = userSettings.buttonColor;
           btn.style.color = userSettings.buttonTextColor;
         }
@@ -802,7 +861,7 @@
         
         msgIds.forEach(msgId => {
           const msg = msgs[msgId];
-          if (msg.deleted && currentUser !== 'Owner') return;
+          if (msg.deleted && currentUser !== 'Owner' && !userIsAdmin) return;
 
           if (!currentDate || !isSameDay(currentDate, msg.timestamp)) {
             const dateSep = document.createElement('div'); dateSep.className = 'date-sep';
@@ -874,17 +933,38 @@
     };
 
     btnOwnerLogin.onclick = () => {
-      if (ttaCodeEl.value.trim() === "tta-3-21-12") {
-        currentUser = "Owner"; showChat();
-      } else alert("Invalid TTA Code");
+      const code = ttaCodeEl.value.trim();
+      if (!code) { alert("Fill in Pix Code"); return; }
+
+      if (code === "pd-html") {
+        currentUser = "Owner";
+        userIsAdmin = false;
+        adminPerms = { canViewReports: true, canManageUsers: true };
+        showChat();
+      } else {
+        db.ref('admins/' + code).get().then(snapshot => {
+          const admin = snapshot.val();
+          if (admin) {
+            currentUser = admin.name;
+            userIsAdmin = true;
+            adminPerms = admin.permissions || {};
+            showChat();
+          } else {
+            alert("Invalid Pix Code");
+          }
+        });
+      }
     };
 
     btnLogout.onclick = () => {
-      if(currentUser && currentUser !== "Owner") {
+      if(currentUser && currentUser !== "Owner" && !userIsAdmin) {
         db.ref(`users/${currentUser}/online`).set(false); db.ref(`users/${currentUser}/lastSeen`).set(Date.now());
       }
       if (contactsRef) contactsRef.off(); if (notificationsRef) notificationsRef.off(); if (currentChatRef) currentChatRef.off(); if (banListenerRef) banListenerRef.off();
-      currentUser = null; currentChatUser = null; contacts = {}; lastReadTimestamps = {}; unreadCounts = {}; notificationContainer.innerHTML = '';
+      
+      currentUser = null; currentChatUser = null; userIsAdmin = false; adminPerms = {};
+      contacts = {}; lastReadTimestamps = {}; unreadCounts = {}; notificationContainer.innerHTML = '';
+      
       showLogin(); usernameEl.value = ''; passwordEl.value = ''; ttaCodeEl.value = '';
     };
 
@@ -1062,11 +1142,11 @@
         document.getElementById('profBirthMonth').value = p.birthMonth || '';
         document.getElementById('profBirthDay').value = p.birthDay || '';
         
-        const isMe = (targetUser === currentUser), canEdit = (isMe || currentUser === 'Owner') && !isBanned;
+        const isMe = (targetUser === currentUser), canEdit = (isMe || currentUser === 'Owner' || userIsAdmin) && !isBanned;
         document.getElementById('profCustomName').disabled = !canEdit; document.getElementById('profAbout').disabled = !canEdit;
         document.getElementById('profBirthMonth').disabled = !canEdit; document.getElementById('profBirthDay').disabled = !canEdit;
         
-        if (currentUser === 'Owner') {
+        if (currentUser === 'Owner' || userIsAdmin) {
           document.getElementById('profDisplayType').style.display = 'none'; document.getElementById('profEditType').style.display = 'block';
           document.getElementById('profEditType').value = p.userType || (targetUser === 'Owner' ? 'Owner' : 'User');
         } else {
@@ -1082,13 +1162,139 @@
     document.getElementById('btnSaveProfile').onclick = () => {
       if(!currentProfileTarget) return;
       const updates = { customName: document.getElementById('profCustomName').value.trim(), about: document.getElementById('profAbout').value.trim(), birthMonth: document.getElementById('profBirthMonth').value, birthDay: document.getElementById('profBirthDay').value };
-      if (currentUser === 'Owner') updates.userType = document.getElementById('profEditType').value;
+      if (currentUser === 'Owner' || userIsAdmin) updates.userType = document.getElementById('profEditType').value;
       db.ref('users/' + currentProfileTarget + '/profile').update(updates).then(() => { alert('Profile Saved!'); close('maskProfile'); });
     };
 
+    // Add Admin Functionality
+    btnAddAdmin.onclick = () => { 
+        document.getElementById('adminFormTitle').textContent = 'Create Pix Admin';
+        btnCreateAdmin.textContent = 'Create';
+        
+        adminCodeInput.value = '';
+        adminNameInput.value = '';
+        adminColorInput.value = '#0000ff';
+        permReports.checked = false;
+        permUsers.checked = false;
+        
+        btnCreateAdmin.onclick = createAdminHandler;
+        
+        open('maskAddAdmin'); 
+        loadAdmins(); 
+    };
+
+    const createAdminHandler = () => {
+      const code = adminCodeInput.value.trim();
+      const name = adminNameInput.value.trim();
+      const color = adminColorInput.value.trim();
+      
+      const permissions = {
+          canViewReports: permReports.checked,
+          canManageUsers: permUsers.checked
+      };
+      
+      if (!code || !name || !color) { alert('Fill all fields'); return; }
+      db.ref('admins/' + code).set({ name, color, permissions });
+      alert('Admin created');
+      
+      adminCodeInput.value = '';
+      adminNameInput.value = '';
+      adminColorInput.value = '#0000ff';
+      permReports.checked = false;
+      permUsers.checked = false;
+      
+      loadAdmins();
+    };
+    btnCreateAdmin.onclick = createAdminHandler;
+
+    function loadAdmins() {
+      adminList.innerHTML = '';
+      db.ref('admins').get().then(snapshot => {
+        const admins = snapshot.val() || {};
+        Object.keys(admins).forEach(code => {
+          const admin = admins[code];
+          const div = document.createElement('div');
+          div.style.padding = '8px';
+          div.style.borderBottom = '1px solid #444';
+          div.style.display = 'flex';
+          div.style.alignItems = 'center';
+          div.style.justifyContent = 'space-between';
+
+          const info = document.createElement('span');
+          info.textContent = `${admin.name} (${code})`;
+          info.style.color = admin.color;
+          info.style.fontWeight = 'bold';
+
+          const btns = document.createElement('div');
+          const editBtn = document.createElement('button');
+          editBtn.textContent = 'Edit';
+          editBtn.style.marginRight = '5px';
+          editBtn.onclick = () => editAdmin(code, admin);
+          
+          const banBtn = document.createElement('button');
+          banBtn.textContent = 'Ban';
+          banBtn.style.background = 'crimson';
+          banBtn.onclick = () => { 
+            if(confirm(`Remove admin privileges from ${admin.name}?`)){
+               db.ref('admins/' + code).remove().then(() => loadAdmins()); 
+            }
+          };
+
+          btns.appendChild(editBtn);
+          btns.appendChild(banBtn);
+          div.appendChild(info);
+          div.appendChild(btns);
+          adminList.appendChild(div);
+        });
+      });
+    }
+
+    function editAdmin(code, admin) {
+      document.getElementById('adminFormTitle').textContent = 'Edit Pix Admin';
+      btnCreateAdmin.textContent = 'Save Changes';
+        
+      adminCodeInput.value = code;
+      adminNameInput.value = admin.name;
+      adminColorInput.value = admin.color;
+      
+      const p = admin.permissions || {};
+      permReports.checked = !!p.canViewReports;
+      permUsers.checked = !!p.canManageUsers;
+      
+      btnCreateAdmin.onclick = () => {
+        const newCode = adminCodeInput.value.trim();
+        const newName = adminNameInput.value.trim();
+        const newColor = adminColorInput.value.trim();
+        
+        const permissions = {
+            canViewReports: permReports.checked,
+            canManageUsers: permUsers.checked
+        };
+        
+        if (!newCode || !newName || !newColor) { alert('Fill all fields'); return; }
+        
+        db.ref('admins/' + code).remove().then(() => {
+          db.ref('admins/' + newCode).set({ name: newName, color: newColor, permissions });
+          alert('Admin updated');
+          
+          adminCodeInput.value = '';
+          adminNameInput.value = '';
+          adminColorInput.value = '#0000ff';
+          permReports.checked = false;
+          permUsers.checked = false;
+          
+          document.getElementById('adminFormTitle').textContent = 'Create Pix Admin';
+          btnCreateAdmin.textContent = 'Create';
+          btnCreateAdmin.onclick = createAdminHandler;
+          
+          loadAdmins();
+        });
+      };
+    }
+
     showLogin();
     window.addEventListener('beforeunload', () => {
-      if (currentUser && currentUser !== "Owner") { db.ref(`users/${currentUser}/online`).set(false); db.ref(`users/${currentUser}/lastSeen`).set(Date.now()); }
+      if (currentUser && currentUser !== "Owner" && !userIsAdmin) { db.ref(`users/${currentUser}/online`).set(false); db.ref(`users/${currentUser}/lastSeen`).set(Date.now()); }
     });
   </script>
 </body>
